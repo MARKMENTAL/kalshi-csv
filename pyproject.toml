@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kalshi-csv"
+version = "0.1.0"
+description = "Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "markmental", email = "marky611@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial",
+]
+keywords = ["kalshi", "csv", "tax", "irs", "form-8949"]
+
+[project.scripts]
+kalshi-csv = "kalshi_csv.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kalshi_csv"]

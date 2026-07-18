@@ -8,6 +8,28 @@ Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries for 
 pip install kalshi-csv
 ```
 
+## Getting Your Transactions CSV
+
+Download your transaction history from Kalshi:
+
+1. Go to [https://kalshi.com/account/taxes](https://kalshi.com/account/taxes)
+2. Download the transaction CSV for the tax year you want to analyze
+3. Pass it to `kalshi-csv` as shown below
+
+Each tax year produces a separate CSV file.
+
+## CSV Format
+
+The tool expects the standard Kalshi transaction export with these columns:
+
+```
+type, quantity_fp, market_ticker, side, entry_price_dollars, exit_price_dollars,
+open_fees_dollars, close_fees_dollars, realized_pnl_without_fees_dollars,
+realized_pnl_with_fees_dollars, close_timestamp, open_timestamp
+```
+
+Rows without `realized_pnl_without_fees_dollars` are automatically skipped.
+
 ## CLI Usage
 
 Parse a Kalshi transactions CSV and display the trade matrix with IRS summary:
@@ -61,14 +83,50 @@ from kalshi_csv import KalshiCSV
 kalshi = KalshiCSV("Kalshi-Transactions-2026.csv")
 kalshi.parse()
 
+# Access individual trades
+for trade in kalshi.trades:
+    print(f"{trade['ticker']}: {trade['side']} {trade['qty']} @ ${trade['entry']}")
+    print(f"  P&L: ${trade['pnl_with_fees']:.2f}")
+
+# Access aggregate summary
 print(f"Total trades: {kalshi.summary['trade_count']}")
+print(f"Total fees: ${kalshi.summary['total_fees']:.2f}")
 print(f"Total P&L: ${kalshi.summary['total_pnl_with_fees']:.2f}")
 
+# Get IRS Form 8949 data
 irs = kalshi.irs_summary()
 print(f"Gross Proceeds: ${irs['gross_proceeds']:.2f}")
 print(f"Cost Basis: ${irs['cost_basis']:.2f}")
 print(f"Gain/Loss: ${irs['gain_or_loss']:.2f}")
 ```
+
+### Data Structures
+
+**Trade dict** (`kalshi.trades`):
+- `ticker`: Market ticker symbol
+- `side`: "YES" or "NO"
+- `qty`: Quantity of contracts
+- `entry`: Entry price in dollars
+- `exit`: Exit price in dollars
+- `pnl_no_fees`: P&L without fees
+- `pnl_with_fees`: P&L including fees
+- `open_fees`: Opening fees
+- `close_fees`: Closing fees
+
+**Summary dict** (`kalshi.summary`):
+- `trade_count`: Number of trades parsed
+- `total_fees`: Sum of all fees
+- `total_pnl_without_fees`: Total P&L excluding fees
+- `total_pnl_with_fees`: Total P&L including fees
+- `total_tax_basis`: Total cost basis for IRS reporting
+- `total_tax_proceeds`: Total proceeds for IRS reporting
+
+**IRS summary dict** (`kalshi.irs_summary()`):
+- `box`: "C" (for Form 8949 Box C)
+- `description`: "Kalshi Event Contracts (Aggregate Summary)"
+- `gross_proceeds`: Total proceeds
+- `cost_basis`: Total cost basis
+- `gain_or_loss`: Net gain or loss
 
 ## IRS Form 8949
 
@@ -82,7 +140,13 @@ Use the aggregate summary for a single-line entry on Form 8949, or export to a f
 
 **Disclaimer**: This tool provides calculations based on Kalshi transaction data. Consult a tax professional for specific tax advice.
 
+## Source Code
+
+This project is hosted in two locations:
+- **GitHub**: [https://github.com/MARKMENTAL/kalshi-csv](https://github.com/MARKMENTAL/kalshi-csv)
+- **Codeberg**: [https://codeberg.org/markmental/kalshi-csv](https://codeberg.org/markmental/kalshi-csv)
+
 ## License
 
-MIT
+[MIT](LICENSE)
 

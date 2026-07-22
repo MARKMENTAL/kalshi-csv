@@ -50,26 +50,59 @@ Disable colored output (useful for piping or redirecting):
 kalshi-csv Kalshi-Transactions-2026.csv --no-color
 ```
 
+Use ASCII characters instead of Unicode box-drawing (for terminals without UTF-8 support):
+
+```bash
+kalshi-csv Kalshi-Transactions-2026.csv --ascii
+```
+
 ### Sample Output
 
+Default mode (Unicode box-drawing):
+
 ```
-Ticker                             | Side | Qty    | Entry  | Exit   | P&L (No Fees)
--------------------------------------------------------------------------------
-KXWCADVANCE-26JUL07ARGEGY-ARG      | YES  | 0.17   | $0.86  | $0.69  | -$0.03
-KXWC1H-26JUL07ARGEGY-TIE           | YES  | 0.34   | $0.28  | $0.00  | -$0.10
-KXMLBGAME-26JUL081940BOSCWS-BOS    | YES  | 0.96   | $0.50  | $0.91  | $0.39
--------------------------------------------------------------------------------
+┌──────────────────────────────────┬──────┬────────┬────────┬────────┬────────────────┬────────┐
+│ Ticker                           │ Side │ Qty    │ Entry  │ Exit   │ P&L (No Fees)  │ Fees   │
+├──────────────────────────────────┼──────┼────────┼────────┼────────┼────────────────┼────────┤
+│ KXWCADVANCE-26JUL07ARGEGY-ARG    │ YES  │ 0.17   │ $0.86  │ $0.69  │ $-0.03         │ $0.00  │
+│ KXWC1H-26JUL07ARGEGY-TIE         │ YES  │ 0.34   │ $0.28  │ $0.00  │ $-0.10         │ $0.00  │
+│ KXMLBGAME-26JUL081940BOSCWS-BOS  │ YES  │ 0.96   │ $0.50  │ $0.91  │ $+0.39         │ $0.02  │
+└──────────────────────────────────┴──────┴────────┴────────┴────────┴────────────────┴────────┘
 Total Transactions Parsed: 3
-Total Exchange Fees Paid:  $0.05
-Internal Tracked Net P&L:  $0.26
--------------------------------------------------------------------------------
+Total Exchange Fees Paid:  $0.02
+Internal Tracked Net P&L:  $+0.26
+-----------------------------------------------------------------------------------
 === IRS FORM 8949 / SCHEDULE D AGGREGATE SUMMARY ===
 Use these exact aggregates for a single-line summary entry:
   * Box to Check:            Box C (Short-term, not reported on Form 1099-B)
   * (a) Description:         Kalshi Event Contracts (Aggregate Summary)
-  * (d) Gross Proceeds:      $2.50
+  * (d) Gross Proceeds:      $+2.50
   * (e) Cost or Other Basis: $2.24
-  * (h) Gain or (Loss):      $0.26
+  * (h) Gain or (Loss):      $+0.26
+====================================================
+```
+
+ASCII mode (`--ascii`):
+
+```
++----------------------------------+------+--------+--------+--------+----------------+--------+
+| Ticker                           | Side | Qty    | Entry  | Exit   | P&L (No Fees)  | Fees   |
++----------------------------------+------+--------+--------+--------+----------------+--------+
+| KXWCADVANCE-26JUL07ARGEGY-ARG    | YES  | 0.17   | $0.86  | $0.69  | $-0.03         | $0.00  |
+| KXWC1H-26JUL07ARGEGY-TIE         | YES  | 0.34   | $0.28  | $0.00  | $-0.10         | $0.00  |
+| KXMLBGAME-26JUL081940BOSCWS-BOS  | YES  | 0.96   | $0.50  | $0.91  | $+0.39         | $0.02  |
++----------------------------------+------+--------+--------+--------+----------------+--------+
+Total Transactions Parsed: 3
+Total Exchange Fees Paid:  $0.02
+Internal Tracked Net P&L:  $+0.26
+-----------------------------------------------------------------------------------
+=== IRS FORM 8949 / SCHEDULE D AGGREGATE SUMMARY ===
+Use these exact aggregates for a single-line summary entry:
+  * Box to Check:            Box C (Short-term, not reported on Form 1099-B)
+  * (a) Description:         Kalshi Event Contracts (Aggregate Summary)
+  * (d) Gross Proceeds:      $+2.50
+  * (e) Cost or Other Basis: $2.24
+  * (h) Gain or (Loss):      $+0.26
 ====================================================
 ```
 

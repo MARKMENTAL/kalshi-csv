@@ -51,3 +51,64 @@ def truncate_ticker(ticker, max_len=32):
     if len(ticker) > 29:
         return ticker[:29] + "..."
     return ticker
+
+
+UNICODE_BOX = {
+    "top_left": "┌",
+    "top_right": "┐",
+    "bottom_left": "└",
+    "bottom_right": "┘",
+    "horizontal": "─",
+    "vertical": "│",
+    "top_tee": "┬",
+    "bottom_tee": "┴",
+    "left_tee": "├",
+    "right_tee": "┤",
+    "cross": "┼",
+}
+
+ASCII_BOX = {
+    "top_left": "+",
+    "top_right": "+",
+    "bottom_left": "+",
+    "bottom_right": "+",
+    "horizontal": "-",
+    "vertical": "|",
+    "top_tee": "+",
+    "bottom_tee": "+",
+    "left_tee": "+",
+    "right_tee": "+",
+    "cross": "+",
+}
+
+
+def get_box_chars(ascii_mode=False):
+    """Returns the appropriate box-drawing characters."""
+    return ASCII_BOX if ascii_mode else UNICODE_BOX
+
+
+def format_table_header(headers, widths, ascii_mode=False):
+    """Formats a table header row with box-drawing characters."""
+    box = get_box_chars(ascii_mode)
+    cells = [f" {h:<{w}} " for h, w in zip(headers, widths)]
+    return box["vertical"] + box["vertical"].join(cells) + box["vertical"]
+
+
+def format_table_separator(widths, ascii_mode=False, position="middle"):
+    """Formats a table separator line with box-drawing characters."""
+    box = get_box_chars(ascii_mode)
+    segments = [box["horizontal"] * (w + 2) for w in widths]
+    
+    if position == "top":
+        return box["top_left"] + box["top_tee"].join(segments) + box["top_right"]
+    elif position == "bottom":
+        return box["bottom_left"] + box["bottom_tee"].join(segments) + box["bottom_right"]
+    else:
+        return box["left_tee"] + box["cross"].join(segments) + box["right_tee"]
+
+
+def format_table_row(values, widths, ascii_mode=False):
+    """Formats a table data row with box-drawing characters."""
+    box = get_box_chars(ascii_mode)
+    cells = [f" {str(v):<{w}} " for v, w in zip(values, widths)]
+    return box["vertical"] + box["vertical"].join(cells) + box["vertical"]

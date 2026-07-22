@@ -9,6 +9,10 @@ from .formatter import (
     format_currency_color,
     format_currency_color_padded,
     truncate_ticker,
+    format_table_header,
+    format_table_separator,
+    format_table_row,
+    get_box_chars,
 )
 
 
@@ -26,29 +30,45 @@ def main():
         action="store_true",
         help="Disable ANSI color output",
     )
+    parser.add_argument(
+        "--ascii",
+        action="store_true",
+        help="Use ASCII characters instead of Unicode box-drawing",
+    )
 
     args = parser.parse_args()
     no_color = args.no_color
+    ascii_mode = args.ascii
 
     kalshi = KalshiCSV(args.csv_path)
     kalshi.parse()
 
+    headers = ["Ticker", "Side", "Qty", "Entry", "Exit", "P&L (No Fees)", "Fees"]
+    widths = [32, 4, 6, 6, 6, 14, 6]
+
     print()
-    print(
-        f"{'Ticker':<32} | {'Side':<4} | {'Qty':<6} | {'Entry':<6} | {'Exit':<6} | {'P&L (No Fees)':<14} | {'Fees':<6}"
-    )
-    print("-" * 90)
+    print(format_table_separator(widths, ascii_mode, "top"))
+    print(format_table_header(headers, widths, ascii_mode))
+    print(format_table_separator(widths, ascii_mode, "middle"))
 
     for trade in kalshi.trades:
         pnl_str = format_currency_color_padded(trade["pnl_no_fees"], 14, no_color)
         fees = trade["open_fees"] + trade["close_fees"]
         ticker_display = truncate_ticker(trade["ticker"])
-        print(
-            f"{ticker_display:<32} | {trade['side']:<4} | {trade['qty']:<6.2f} | "
-            f"${trade['entry']:<5.2f} | ${trade['exit']:<5.2f} | {pnl_str} | ${fees:<5.2f}"
+        
+        box = get_box_chars(ascii_mode)
+        row = (
+            f" {ticker_display:<32} "
+            f"{box['vertical']} {trade['side']:<4} "
+            f"{box['vertical']} {trade['qty']:<6.2f} "
+            f"{box['vertical']} ${trade['entry']:<5.2f} "
+            f"{box['vertical']} ${trade['exit']:<5.2f} "
+            f"{box['vertical']} {pnl_str} "
+            f"{box['vertical']} ${fees:<5.2f} "
         )
+        print(box["vertical"] + row + box["vertical"])
 
-    print("-" * 90)
+    print(format_table_separator(widths, ascii_mode, "bottom"))
     print(f"Total Transactions Parsed: {kalshi.summary['trade_count']}")
     print(f"Total Exchange Fees Paid:  ${kalshi.summary['total_fees']:.2f}")
     print(

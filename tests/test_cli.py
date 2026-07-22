@@ -85,3 +85,17 @@ def test_cli_ticker_truncation(tmp_path):
     assert result.returncode == 0
     assert "VERYLONGTICKERNAME-THAT-EXCEE..." in result.stdout
     assert "VERYLONGTICKERNAME-THAT-EXCEEDS-THIRTY-CHARS" not in result.stdout
+
+
+def test_cli_ascii_flag(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--no-color", "--ascii"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "+" in result.stdout
+    assert "-" in result.stdout
+    assert "|" in result.stdout
+    assert "┌" not in result.stdout
+    assert "│" not in result.stdout

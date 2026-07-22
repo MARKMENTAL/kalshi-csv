@@ -7,6 +7,8 @@ from .formatter import (
     color_yellow,
     color_cyan,
     format_currency_color,
+    format_currency_color_padded,
+    truncate_ticker,
 )
 
 
@@ -38,11 +40,12 @@ def main():
     print("-" * 90)
 
     for trade in kalshi.trades:
-        pnl_str = format_currency_color(trade["pnl_no_fees"], no_color)
+        pnl_str = format_currency_color_padded(trade["pnl_no_fees"], 14, no_color)
         fees = trade["open_fees"] + trade["close_fees"]
+        ticker_display = truncate_ticker(trade["ticker"])
         print(
-            f"{trade['ticker']:<32} | {trade['side']:<4} | {trade['qty']:<6.2f} | "
-            f"${trade['entry']:<5.2f} | ${trade['exit']:<5.2f} | {pnl_str:<14} | ${fees:<5.2f}"
+            f"{ticker_display:<32} | {trade['side']:<4} | {trade['qty']:<6.2f} | "
+            f"${trade['entry']:<5.2f} | ${trade['exit']:<5.2f} | {pnl_str} | ${fees:<5.2f}"
         )
 
     print("-" * 90)

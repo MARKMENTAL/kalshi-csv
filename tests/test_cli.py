@@ -66,3 +66,22 @@ def test_cli_missing_file():
     )
     assert result.returncode != 0
     assert "not found" in result.stderr.lower() or "error" in result.stderr.lower()
+
+
+def test_cli_ticker_truncation(tmp_path):
+    csv_file = tmp_path / "long_ticker.csv"
+    csv_file.write_text(
+        "type,quantity_fp,market_ticker,side,entry_price_dollars,exit_price_dollars,"
+        "open_fees_dollars,close_fees_dollars,realized_pnl_without_fees_dollars,"
+        "realized_pnl_with_fees_dollars,close_timestamp,open_timestamp\n"
+        "trade,1.00,VERYLONGTICKERNAME-THAT-EXCEEDS-THIRTY-CHARS,yes,0.50,1.00,"
+        "0.01,0.02,0.50,0.47,2026-07-07T12:19:57-04:00,2026-07-07T09:48:19-04:00\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", str(csv_file), "--no-color"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "VERYLONGTICKERNAME-THAT-EXCEE..." in result.stdout
+    assert "VERYLONGTICKERNAME-THAT-EXCEEDS-THIRTY-CHARS" not in result.stdout

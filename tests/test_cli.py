@@ -13,6 +13,7 @@ def test_cli_runs_successfully(sample_csv):
     assert "TESTMARKET-WIN" in result.stdout
     assert "TESTMARKET-LOSS" in result.stdout
     assert "Total Transactions Parsed: 3" in result.stdout
+    assert "Fees" in result.stdout
 
 
 def test_cli_irs_summary_output(sample_csv):

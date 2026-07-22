@@ -33,18 +33,19 @@ def main():
 
     print()
     print(
-        f"{'Ticker':<32} | {'Side':<4} | {'Qty':<6} | {'Entry':<6} | {'Exit':<6} | {'P&L (No Fees)':<14}"
+        f"{'Ticker':<32} | {'Side':<4} | {'Qty':<6} | {'Entry':<6} | {'Exit':<6} | {'P&L (No Fees)':<14} | {'Fees':<6}"
     )
-    print("-" * 83)
+    print("-" * 90)
 
     for trade in kalshi.trades:
         pnl_str = format_currency_color(trade["pnl_no_fees"], no_color)
+        fees = trade["open_fees"] + trade["close_fees"]
         print(
             f"{trade['ticker']:<32} | {trade['side']:<4} | {trade['qty']:<6.2f} | "
-            f"${trade['entry']:<5.2f} | ${trade['exit']:<5.2f} | {pnl_str:<14}"
+            f"${trade['entry']:<5.2f} | ${trade['exit']:<5.2f} | {pnl_str:<14} | ${fees:<5.2f}"
         )
 
-    print("-" * 83)
+    print("-" * 90)
     print(f"Total Transactions Parsed: {kalshi.summary['trade_count']}")
     print(f"Total Exchange Fees Paid:  ${kalshi.summary['total_fees']:.2f}")
     print(

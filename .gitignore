@@ -49,3 +49,4 @@ ENV/
 
 # Environment variables
 .env
+u*-p*.sh

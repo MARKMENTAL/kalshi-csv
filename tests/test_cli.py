@@ -24,6 +24,8 @@ def test_cli_irs_summary_output(sample_csv):
     )
     assert "IRS FORM 8949" in result.stdout
     assert "Box C" in result.stdout
+    assert "Date Acquired:" in result.stdout
+    assert "Date Sold:" in result.stdout
     assert "Gross Proceeds:" in result.stdout
     assert "Cost or Other Basis:" in result.stdout
     assert "Gain or (Loss):" in result.stdout
@@ -42,6 +44,8 @@ def test_cli_irs_file_creation(sample_csv, tmp_path):
     content = irs_file.read_text()
     assert "IRS FORM 8949" in content
     assert "Box C" in content
+    assert "Date Acquired:" in content
+    assert "Date Sold:" in content
     assert "Gross Proceeds:" in content
     assert "Cost or Other Basis:" in content
     assert "Gain or (Loss):" in content

@@ -1,5 +1,6 @@
 import csv
 import os
+from datetime import datetime
 
 
 class KalshiCSV:
@@ -15,6 +16,8 @@ class KalshiCSV:
             "total_pnl_with_fees": 0.0,
             "total_tax_basis": 0.0,
             "total_tax_proceeds": 0.0,
+            "earliest_open_date": None,
+            "latest_close_date": None,
         }
 
     def parse(self):
@@ -57,13 +60,43 @@ class KalshiCSV:
                 self.summary["total_pnl_with_fees"] += pnl_with_fees
                 self.summary["total_fees"] += open_fees + close_fees
 
+                if row.get("open_timestamp"):
+                    try:
+                        open_dt = datetime.fromisoformat(row["open_timestamp"])
+                        if (
+                            self.summary["earliest_open_date"] is None
+                            or open_dt < self.summary["earliest_open_date"]
+                        ):
+                            self.summary["earliest_open_date"] = open_dt
+                    except ValueError:
+                        pass
+
+                if row.get("close_timestamp"):
+                    try:
+                        close_dt = datetime.fromisoformat(row["close_timestamp"])
+                        if (
+                            self.summary["latest_close_date"] is None
+                            or close_dt > self.summary["latest_close_date"]
+                        ):
+                            self.summary["latest_close_date"] = close_dt
+                    except ValueError:
+                        pass
+
         return self
+
+    def _format_date(self, dt):
+        """Formats a datetime object as MM/DD/YYYY for IRS Form 8949."""
+        if dt is None:
+            return ""
+        return dt.strftime("%m/%d/%Y")
 
     def irs_summary(self):
         """Returns a dict with IRS Form 8949 aggregate fields."""
         return {
             "box": "C",
             "description": "Kalshi Event Contracts (Aggregate Summary)",
+            "date_acquired": self._format_date(self.summary["earliest_open_date"]),
+            "date_sold": self._format_date(self.summary["latest_close_date"]),
             "gross_proceeds": self.summary["total_tax_proceeds"],
             "cost_basis": self.summary["total_tax_basis"],
             "gain_or_loss": self.summary["total_pnl_with_fees"],

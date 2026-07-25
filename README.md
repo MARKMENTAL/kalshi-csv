@@ -76,6 +76,8 @@ Internal Tracked Net P&L:  $+0.26
 Use these exact aggregates for a single-line summary entry:
   * Box to Check:            Box C (Short-term, not reported on Form 1099-B)
   * (a) Description:         Kalshi Event Contracts (Aggregate Summary)
+  * (b) Date Acquired:       07/07/2026
+  * (c) Date Sold:           07/08/2026
   * (d) Gross Proceeds:      $+2.50
   * (e) Cost or Other Basis: $2.24
   * (h) Gain or (Loss):      $+0.26
@@ -100,6 +102,8 @@ Internal Tracked Net P&L:  $+0.26
 Use these exact aggregates for a single-line summary entry:
   * Box to Check:            Box C (Short-term, not reported on Form 1099-B)
   * (a) Description:         Kalshi Event Contracts (Aggregate Summary)
+  * (b) Date Acquired:       07/07/2026
+  * (c) Date Sold:           07/08/2026
   * (d) Gross Proceeds:      $+2.50
   * (e) Cost or Other Basis: $2.24
   * (h) Gain or (Loss):      $+0.26

@@ -69,9 +69,20 @@ def test_irs_summary(sample_csv):
     irs = kalshi.irs_summary()
     assert irs["box"] == "C"
     assert irs["description"] == "Kalshi Event Contracts (Aggregate Summary)"
+    assert irs["date_acquired"] == "07/07/2026"
+    assert irs["date_sold"] == "07/07/2026"
     assert abs(irs["gross_proceeds"] - 1.37) < 1e-6
     assert abs(irs["cost_basis"] - 1.64) < 1e-6
     assert abs(irs["gain_or_loss"] - (-0.27)) < 1e-6
+
+
+def test_date_tracking(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    assert kalshi.summary["earliest_open_date"] is not None
+    assert kalshi.summary["latest_close_date"] is not None
+    assert kalshi.summary["earliest_open_date"].strftime("%m/%d/%Y") == "07/07/2026"
+    assert kalshi.summary["latest_close_date"].strftime("%m/%d/%Y") == "07/07/2026"
 
 
 def test_file_not_found():

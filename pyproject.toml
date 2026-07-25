@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kalshi-csv"
-version = "0.1.1"
+version = "0.1.2"
 description = "Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries"
 readme = "README.md"
 license = "MIT"

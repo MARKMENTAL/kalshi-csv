@@ -103,3 +103,24 @@ def test_cli_ascii_flag(sample_csv):
     assert "|" in result.stdout
     assert "┌" not in result.stdout
     assert "│" not in result.stdout
+
+
+def test_cli_legacy_web_flag_in_help():
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", "--help"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "--legacy-web" in result.stdout
+    assert "--legacy-web-port" in result.stdout
+
+
+def test_cli_legacy_web_port_default_in_help():
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", "--help"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "8080" in result.stdout

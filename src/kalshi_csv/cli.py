@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 
 from .parser import KalshiCSV
@@ -35,6 +36,17 @@ def main():
         action="store_true",
         help="Use ASCII characters instead of Unicode box-drawing",
     )
+    parser.add_argument(
+        "--legacy-web",
+        action="store_true",
+        help="Start a legacy web server (HTML 4.01) to view portfolio in browser",
+    )
+    parser.add_argument(
+        "--legacy-web-port",
+        type=int,
+        default=8080,
+        help="Port for legacy web server (default: 8080)",
+    )
 
     args = parser.parse_args()
     no_color = args.no_color
@@ -42,6 +54,13 @@ def main():
 
     kalshi = KalshiCSV(args.csv_path)
     kalshi.parse()
+
+    if args.legacy_web:
+        from .web import LegacyWebServer
+        csv_filename = os.path.basename(args.csv_path)
+        server = LegacyWebServer(kalshi, csv_filename, port=args.legacy_web_port)
+        server.serve()
+        return
 
     headers = ["Ticker", "Side", "Qty", "Entry", "Exit", "P&L (No Fees)", "Fees"]
     widths = [32, 4, 6, 6, 6, 14, 6]

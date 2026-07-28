@@ -89,3 +89,88 @@ def test_file_not_found():
     kalshi = KalshiCSV("/nonexistent/path.csv")
     with pytest.raises(FileNotFoundError):
         kalshi.parse()
+
+
+def test_market_breakdown_returns_list(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    breakdown = kalshi.market_breakdown()
+    assert isinstance(breakdown, list)
+    assert len(breakdown) > 0
+
+
+def test_market_breakdown_structure(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    breakdown = kalshi.market_breakdown()
+    for item in breakdown:
+        assert "category" in item
+        assert "trades" in item
+        assert "win_rate" in item
+        assert "net_pnl" in item
+
+
+def test_market_breakdown_sorted_by_trades(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    breakdown = kalshi.market_breakdown()
+    trade_counts = [item["trades"] for item in breakdown]
+    assert trade_counts == sorted(trade_counts, reverse=True)
+
+
+def test_recent_closed_positions_returns_list(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    positions = kalshi.recent_closed_positions()
+    assert isinstance(positions, list)
+
+
+def test_recent_closed_positions_limit(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    positions = kalshi.recent_closed_positions(n=2)
+    assert len(positions) <= 2
+
+
+def test_recent_closed_positions_sorted_by_date(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    positions = kalshi.recent_closed_positions()
+    if len(positions) > 1:
+        timestamps = [p["close_timestamp"] for p in positions]
+        assert timestamps == sorted(timestamps, reverse=True)
+
+
+def test_summary_tracks_wins_losses_pushes(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    assert kalshi.summary["wins"] >= 0
+    assert kalshi.summary["losses"] >= 0
+    assert kalshi.summary["pushes"] >= 0
+    assert kalshi.summary["wins"] + kalshi.summary["losses"] + kalshi.summary["pushes"] == kalshi.summary["trade_count"]
+
+
+def test_summary_tracks_best_worst_trade(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    assert kalshi.summary["best_trade"] is not None
+    assert kalshi.summary["worst_trade"] is not None
+    assert "pnl_with_fees" in kalshi.summary["best_trade"]
+    assert "pnl_with_fees" in kalshi.summary["worst_trade"]
+    assert kalshi.summary["best_trade"]["pnl_with_fees"] >= kalshi.summary["worst_trade"]["pnl_with_fees"]
+
+
+def test_trade_has_market_category(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    for trade in kalshi.trades:
+        assert "market_category" in trade
+        assert isinstance(trade["market_category"], str)
+
+
+def test_trade_has_timestamps(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    for trade in kalshi.trades:
+        assert "open_timestamp" in trade
+        assert "close_timestamp" in trade

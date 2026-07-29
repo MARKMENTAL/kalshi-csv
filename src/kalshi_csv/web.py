@@ -87,6 +87,59 @@ def render_portfolio_html(kalshi, csv_filename):
                     <td align="right"><font face="Courier New, Courier, monospace" size="1" color="{pnl_color}"><b>{pnl_str}</b></font></td>
                 </tr>"""
 
+    # IRS summary section
+    irs = kalshi.irs_summary()
+    gross_proceeds_color = "#006600" if irs["gross_proceeds"] >= 0 else "#990000"
+    cost_basis_color = "#006600" if irs["cost_basis"] >= 0 else "#990000"
+    gain_loss_color = "#006600" if irs["gain_or_loss"] >= 0 else "#990000"
+    irs_html = f"""
+    <tr><td><br><hr size="1" color="#CCCCCC" noshade><br></td></tr>
+
+    <tr>
+        <td>
+            <font face="Georgia, Times New Roman, serif" size="3"><b>IRS Form 8949 / Schedule D Summary</b></font>
+            <br><br>
+
+            <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                <tr>
+                    <td width="40%" align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Box to Check:</font></td>
+                    <td width="60%" align="left"><font face="Courier New, Courier, monospace" size="2"><b>{html.escape(irs['box'])}</b></font></td>
+                </tr>
+                <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Description:</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2">{html.escape(irs['description'])}</font></td>
+                </tr>
+                <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Date Acquired:</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2">{html.escape(irs['date_acquired'])}</font></td>
+                </tr>
+                <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Date Sold:</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2">{html.escape(irs['date_sold'])}</font></td>
+                </tr>
+                <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Gross Proceeds:</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2" color="{gross_proceeds_color}"><b>${irs['gross_proceeds']:.2f}</b></font></td>
+                </tr>
+                <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Cost or Other Basis:</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2" color="{cost_basis_color}"><b>${irs['cost_basis']:.2f}</b></font></td>
+                </tr>
+                <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Gain or (Loss):</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2" color="{gain_loss_color}"><b>${irs['gain_or_loss']:+.2f}</b></font></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+"""
+
     page = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -181,6 +234,8 @@ def render_portfolio_html(kalshi, csv_filename):
             </table>
         </td>
     </tr>
+
+    {irs_html}
 
     <tr><td><br><hr size="2" color="#111111" noshade></td></tr>
     <tr>

@@ -94,3 +94,37 @@ def test_render_html_escapes_html_in_tickers(sample_csv):
     html_content = render_portfolio_html(kalshi, "test.csv")
     assert "<script>alert('xss')</script>" not in html_content
     assert "&lt;script&gt;" in html_content
+
+
+def test_render_html_contains_irs_section(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    html_content = render_portfolio_html(kalshi, "test.csv")
+    assert "IRS Form 8949 / Schedule D Summary" in html_content
+    assert "Box to Check:" in html_content
+    assert "Description:" in html_content
+    assert "Date Acquired:" in html_content
+    assert "Date Sold:" in html_content
+    assert "Gross Proceeds:" in html_content
+    assert "Cost or Other Basis:" in html_content
+    assert "Gain or (Loss):" in html_content
+
+
+def test_render_html_irs_values(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    html_content = render_portfolio_html(kalshi, "test.csv")
+    assert ">C<" in html_content
+    assert "Kalshi Event Contracts (Aggregate Summary)" in html_content
+    assert "07/07/2026" in html_content
+
+
+def test_render_html_irs_after_positions(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    html_content = render_portfolio_html(kalshi, "test.csv")
+    positions_pos = html_content.find("Recent Closed Positions")
+    irs_pos = html_content.find("IRS Form 8949")
+    assert positions_pos > 0
+    assert irs_pos > 0
+    assert positions_pos < irs_pos

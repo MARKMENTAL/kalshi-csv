@@ -8,7 +8,7 @@ TICKER_CATEGORY_MAP = {
     "KXWNBA": "WNBA Basketball",
     "KXINXU": "S&P 500 (INXU Intraday)",
     "KXINX": "S&P 500 (INXU Intraday)",
-    "KXMVESPORTS": "Esports & Gaming",
+    "KXMVE": "Multivariate Events",
 }
 
 SOCCER_PREFIXES = [

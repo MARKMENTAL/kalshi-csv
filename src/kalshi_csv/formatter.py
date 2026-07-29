@@ -46,6 +46,28 @@ def format_currency_color_padded(value, width, no_color=False):
     return color_green(padded_str, no_color) if value >= 0 else color_red(padded_str, no_color)
 
 
+def pad_colored_text(text, width, no_color=False):
+    """Pads a colored string to a specific visible width, accounting for ANSI codes."""
+    if no_color:
+        return f"{text:<{width}}"
+    
+    # Strip ANSI codes to get visible length
+    import re
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    visible_text = ansi_escape.sub('', text)
+    visible_len = len(visible_text)
+    
+    if visible_len >= width:
+        return text
+    
+    # Add padding to the end (before the final reset code if present)
+    padding = ' ' * (width - visible_len)
+    if text.endswith('\x1B[0m'):
+        return text[:-4] + padding + '\x1B[0m'
+    else:
+        return text + padding
+
+
 def truncate_ticker(ticker, max_len=32):
     """Truncates ticker to max_len, using ellipsis if longer than 29 chars."""
     if len(ticker) > 29:

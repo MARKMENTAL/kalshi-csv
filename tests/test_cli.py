@@ -124,3 +124,73 @@ def test_cli_legacy_web_port_default_in_help():
     )
     assert result.returncode == 0
     assert "8080" in result.stdout
+
+
+def test_cli_summary_cards_output(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--no-color"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "NET REALIZED P&L" in result.stdout
+    assert "WIN / LOSS RECORD" in result.stdout
+    assert "TOTAL VOLUME" in result.stdout
+    assert "BEST/WORST SINGLE" in result.stdout
+
+
+def test_cli_market_breakdown_output(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--no-color"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "ASSET CLASS / MARKET" in result.stdout
+    assert "TRADES" in result.stdout
+    assert "WIN RATE" in result.stdout
+    assert "NET P&L" in result.stdout
+    assert "Other Markets" in result.stdout
+
+
+def test_cli_summary_cards_box_drawing(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--no-color"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "┌" in result.stdout
+    assert "└" in result.stdout
+    assert "┬" in result.stdout
+    assert "┴" in result.stdout
+
+
+def test_cli_summary_cards_before_irs(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--no-color"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    summary_pos = output.find("NET REALIZED P&L")
+    irs_pos = output.find("IRS FORM 8949")
+    assert summary_pos > 0
+    assert irs_pos > 0
+    assert summary_pos < irs_pos
+
+
+def test_cli_market_breakdown_before_irs(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--no-color"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    market_pos = output.find("ASSET CLASS / MARKET")
+    irs_pos = output.find("IRS FORM 8949")
+    assert market_pos > 0
+    assert irs_pos > 0
+    assert market_pos < irs_pos

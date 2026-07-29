@@ -23,8 +23,9 @@ def test_sp500_categorization():
     assert categorize_ticker("KXINX-26JUL08H1400-T7479.9999") == "S&P 500 (INXU Intraday)"
 
 
-def test_esports_categorization():
-    assert categorize_ticker("KXMVESPORTSMULTIGAMEEXTENDED-S2026769CE3FA3F9-6D4DB2E2128") == "Esports & Gaming"
+def test_multivariate_events_categorization():
+    assert categorize_ticker("KXMVESPORTSMULTIGAMEEXTENDED-S2026769CE3FA3F9-6D4DB2E2128") == "Multivariate Events"
+    assert categorize_ticker("KXMVECROSSCATEGORY-S2026AC77F3A8C7A-6D4DB2E2128") == "Multivariate Events"
 
 
 def test_soccer_categorization():

@@ -28,7 +28,7 @@ keywords = ["kalshi", "csv", "tax", "irs", "form-8949"]
 
 [project.urls]
 Homepage = "https://github.com/MARKMENTAL/kalshi-csv"
-Source = "https://codeberg.org/markmental/kalshi-csv"
+Source = "https://mentalnet.xyz/forgejo-v2/markmental/kalshi-csv"
 Issues = "https://github.com/MARKMENTAL/kalshi-csv/issues"
 
 [project.scripts]

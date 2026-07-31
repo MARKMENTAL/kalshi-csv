@@ -113,12 +113,12 @@ def render_portfolio_html(kalshi, csv_filename):
                 <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
                 <tr>
                     <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Date Acquired:</font></td>
-                    <td align="left"><font face="Courier New, Courier, monospace" size="2">{html.escape(irs['date_acquired'])}</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2">VARIOUS</font></td>
                 </tr>
                 <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
                 <tr>
                     <td align="left"><font face="Geneva, Verdana, sans-serif" size="1" color="#666666">Date Sold:</font></td>
-                    <td align="left"><font face="Courier New, Courier, monospace" size="2">{html.escape(irs['date_sold'])}</font></td>
+                    <td align="left"><font face="Courier New, Courier, monospace" size="2">VARIOUS</font></td>
                 </tr>
                 <tr><td colspan="2"><hr size="1" color="#E0E0E0" noshade></td></tr>
                 <tr>

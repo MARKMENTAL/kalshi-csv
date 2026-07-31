@@ -14,6 +14,7 @@ pip install kalshi-csv
 - **Market Breakdown**: See performance by market category with trade counts, win rates, and net P&L
 - **Legacy Web Mode**: Browse your portfolio in a retro HTML 4.01 web interface compatible with older browsers (Netscape Navigator, IE 4+)
 - **Market Categorization**: Automatic categorization of tickers into 7 market types (Global Soccer, MLB, NPB, NBA Summer League, WNBA, S&P 500, Multivariate Events, Other Markets)
+- **Handling of Sold + Acquired Dates**: Instead of handling the aggregated Kalshi trades through approximated dates, we use `VARIOUS` to signal to the IRS that every single underlying transaction in that row independently satisfies the short-term holding period rule (one year or less), even though they were purchased at different times.
 
 ## Getting Your Transactions CSV
 
@@ -163,8 +164,8 @@ Internal Tracked Net P&L:  $+0.26
 Use these exact aggregates for a single-line summary entry:
   * Box to Check:            Box C (Short-term, not reported on Form 1099-B)
   * (a) Description:         Kalshi Event Contracts (Aggregate Summary)
-  * (b) Date Acquired:       07/07/2026
-  * (c) Date Sold:           07/08/2026
+  * (b) Date Acquired:       VARIOUS
+  * (c) Date Sold:           VARIOUS
   * (d) Gross Proceeds:      $+2.50
   * (e) Cost or Other Basis: $2.24
   * (h) Gain or (Loss):      $+0.26
@@ -286,6 +287,54 @@ for trade in recent:
 - `cost_basis`: Total cost basis
 - `gain_or_loss`: Net gain or loss
 
+## Development & Testing
+
+For developers who want to contribute or run the test suite:
+
+### Installing Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Running Tests
+
+The project uses pytest for testing. Run the full test suite:
+
+```bash
+pytest
+```
+
+Or with verbose output:
+
+```bash
+pytest -v
+```
+
+### Sample Test Data
+
+The test suite uses sample data located at `tests/fixtures/sample.csv`. If you want to create this file manually or modify it for testing:
+
+**File location**: `tests/fixtures/sample.csv`
+
+```csv
+type,quantity_fp,market_ticker,side,entry_price_dollars,exit_price_dollars,open_fees_dollars,close_fees_dollars,realized_pnl_without_fees_dollars,realized_pnl_with_fees_dollars,close_timestamp,open_timestamp
+trade,1.00,TESTMARKET-WIN,yes,0.5000,1.0000,0.010000,0.020000,0.500000,0.470000,2026-07-07T12:19:57-04:00,2026-07-07T09:48:19-04:00
+trade,2.00,TESTMARKET-LOSS,yes,0.4000,0.0000,0.020000,0.000000,-0.800000,-0.820000,2026-07-07T12:56:23-04:00,2026-07-07T12:37:41-04:00
+trade,0.50,TESTMARKET-SMALL,no,0.6000,0.8000,0.010000,0.010000,0.100000,0.080000,2026-07-07T14:07:41-04:00,2026-07-07T12:26:45-04:00
+```
+
+This sample contains 3 trades:
+- **TESTMARKET-WIN**: A winning trade (+$0.47 P&L with fees)
+- **TESTMARKET-LOSS**: A losing trade (-$0.82 P&L with fees)
+- **TESTMARKET-SMALL**: A small winning trade (+$0.08 P&L with fees)
+
+You can also test this sample data directly with the CLI:
+
+```bash
+kalshi-csv tests/fixtures/sample.csv
+```
+
 ## IRS Form 8949
 
 Kalshi event contracts are typically reported on **IRS Form 8949, Box C** (short-term transactions not reported on Form 1099-B). The tool calculates:
@@ -300,9 +349,9 @@ Use the aggregate summary for a single-line entry on Form 8949, or export to a f
 
 ## Source Code
 
-This project is hosted in two locations:
+This project is hosted in two locations, GitHub and my home Forgejo server, contributions are easiest through GitHub, but you are welcome to clone from my Forgejo as well:
 - **GitHub**: [https://github.com/MARKMENTAL/kalshi-csv](https://github.com/MARKMENTAL/kalshi-csv)
-- **Codeberg**: [https://codeberg.org/markmental/kalshi-csv](https://codeberg.org/markmental/kalshi-csv)
+- **MentalNet Forgejo v2**: [https://mentalnet.xyz/forgejo-v2/markmental/kalshi-csv](https://mentalnet.xyz/forgejo-v2/markmental/kalshi-csv)
 
 ## License
 

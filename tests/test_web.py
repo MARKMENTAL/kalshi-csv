@@ -1,5 +1,11 @@
+import json
+import threading
+from http.server import HTTPServer
+from pathlib import Path
+from urllib.request import urlopen
+
 from kalshi_csv import KalshiCSV
-from kalshi_csv.web import render_portfolio_html
+from kalshi_csv.web import ModernWebHandler, render_modern_dashboard_html, render_portfolio_html
 
 
 def test_render_html_contains_header(sample_csv):
@@ -28,6 +34,104 @@ def test_render_html_contains_market_breakdown(sample_csv):
     assert "ASSET CLASS / MARKET" in html_content
     assert "TRADES" in html_content
     assert "WIN RATE" in html_content
+
+
+def test_render_html_contains_sp500_price_tier_breakdown(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    kalshi.trades[0]["market_category"] = "S&P 500 (INXU Intraday)"
+    kalshi.trades[0]["entry"] = 0.20
+
+    html_content = render_portfolio_html(kalshi, "test.csv")
+
+    assert "S&amp;P 500 Contract Performance by Entry Price Tier" in html_content
+    assert "&lt;=$0.40 (Out-of-the-Money Speculative)" in html_content
+    assert "ENTRY PRICE TIER" in html_content
+    assert "AVERAGE WIN" in html_content
+    assert "AVERAGE LOSS" in html_content
+    assert "TOTAL NET P&amp;L" in html_content
+    assert "+$0.47" in html_content
+    assert "N/A" in html_content
+
+
+def test_render_html_omits_sp500_price_tiers_without_sp500_trades(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+
+    html_content = render_portfolio_html(kalshi, "test.csv")
+
+    assert "S&amp;P 500 Contract Performance by Entry Price Tier" not in html_content
+
+
+def test_modern_dashboard_includes_all_trades_and_interactive_controls(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+
+    html_content = render_modern_dashboard_html(kalshi, "test.csv")
+
+    assert "<!doctype html>" in html_content
+    assert "TESTMARKET-WIN" in html_content
+    assert "TESTMARKET-LOSS" in html_content
+    assert "TESTMARKET-SMALL" in html_content
+    assert "dashboard.js" in html_content
+    assert "alpine.min.js" in html_content
+    assert "x-model=\"search\"" in html_content
+    assert "S&amp;P 500 price tiers" in html_content
+
+
+def test_modern_dashboard_escapes_csv_values_inside_json_data(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    kalshi.trades[0]["ticker"] = "</script><script>alert('xss')</script>"
+
+    html_content = render_modern_dashboard_html(kalshi, "test.csv")
+
+    assert "</script><script>alert('xss')" not in html_content
+    assert "\\u003c/script\\u003e" in html_content
+
+
+def test_modern_theme_registry_contains_complete_palettes():
+    theme_path = Path(__file__).parents[1] / "src" / "kalshi_csv" / "themes.json"
+    themes = json.loads(theme_path.read_text(encoding="utf-8"))
+
+    assert len(themes) == 40
+    assert "Nord" in {theme["name"] for theme in themes}
+    assert all(len(theme["ansi_normal"]) == 8 for theme in themes)
+    assert all(len(theme["ansi_bright"]) == 8 for theme in themes)
+    assert all(theme["fg"].startswith("#") and theme["bg"].startswith("#") for theme in themes)
+
+
+def test_modern_web_handler_serves_page_and_local_assets(sample_csv):
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    server = HTTPServer(("127.0.0.1", 0), ModernWebHandler)
+    server.html_content = render_modern_dashboard_html(kalshi, "test.csv")
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    base_url = "http://127.0.0.1:{}".format(server.server_address[1])
+
+    try:
+        with urlopen(base_url + "/") as response:
+            page = response.read().decode("utf-8")
+            assert response.headers.get_content_type() == "text/html"
+            assert "Portfolio <span>dashboard</span>" in page
+
+        with urlopen(base_url + "/static/modern.css") as response:
+            css = response.read().decode("utf-8")
+            assert response.headers.get_content_type() == "text/css"
+            assert "--app-bg" in css
+
+        with urlopen(base_url + "/static/alpine.min.js") as response:
+            alpine = response.read()
+            assert response.headers.get_content_type() == "application/javascript"
+            assert len(alpine) > 40_000
+
+        with urlopen(base_url + "/static/ALPINE-LICENSE.md") as response:
+            assert b"MIT License" in response.read()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
 
 
 def test_render_html_contains_recent_positions(sample_csv):
@@ -116,7 +220,7 @@ def test_render_html_irs_values(sample_csv):
     html_content = render_portfolio_html(kalshi, "test.csv")
     assert ">C<" in html_content
     assert "Kalshi Event Contracts (Aggregate Summary)" in html_content
-    assert "07/07/2026" in html_content
+    assert html_content.count(">VARIOUS<") >= 2
 
 
 def test_render_html_irs_after_positions(sample_csv):

@@ -2,6 +2,11 @@
 
 Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries for event contract trading.
 
+## What's New in 0.3.0
+
+- **S&P 500 Contract Performance by Price Tier**: The HTML view groups S&P 500 contracts by entry-price tier and reports trade count, win rate, and net P&L.
+- **Modern Web Dashboard**: Launch a responsive HTML5 dashboard with Alpine.js interactivity, full-history trade search/sorting/pagination, and 40 selectable color themes.
+
 ## Installation
 
 ```bash
@@ -74,6 +79,18 @@ Specify a custom port for the legacy web server:
 
 ```bash
 kalshi-csv Kalshi-Transactions-2026.csv --legacy-web --legacy-web-port 3000
+```
+
+Start the modern interactive dashboard:
+
+```bash
+kalshi-csv Kalshi-Transactions-2026.csv --modern-web
+```
+
+The modern dashboard is served at `http://127.0.0.1:8080/` by default. It binds to the local machine only because it includes your full trade history. Select a theme in the header; your selection is remembered in that browser. To choose another port:
+
+```bash
+kalshi-csv Kalshi-Transactions-2026.csv --modern-web --modern-web-port 3000
 ```
 
 ### Sample Output
@@ -194,10 +211,24 @@ The web interface shows:
 
 - **Summary Cards**: Net Realized P&L, Win/Loss Record, Total Volume, Best/Worst Single Trade
 - **Market Breakdown**: Performance by category with trade counts, win rates, and net P&L
+- **S&P 500 Price Tiers**: Performance grouped by contract entry price in the HTML view
 - **Recent Closed Positions**: Last 20 trades with timestamps, tickers, sides, quantities, entry/exit prices, and P&L
 - **IRS Form 8949 Summary**: Tax reporting data including gross proceeds, cost basis, and gain/loss
 
 The interface uses pure HTML 4.01 table layout with no CSS or JavaScript, ensuring compatibility with legacy browsers.
+
+For S&P 500 contracts, the HTML view groups trades into four entry-price tiers: up to and including $0.40; above $0.40 through $0.70; above $0.70 through $0.85; and above $0.85. Each populated tier shows trade count, win rate, average winning and losing trade P&L, and total net P&L, all using P&L after fees. Pushes count toward trade count and win-rate denominator but are excluded from average win/loss calculations. An average displays as `N/A` when that tier has no wins or no losses.
+
+## Modern Web Mode
+
+The modern dashboard is a separate HTML5 interface; `--legacy-web` continues to serve the original HTML 4.01 page. It includes:
+
+- Portfolio summary cards, an interactive market P&L chart, trade record distribution, and the S&P 500 entry-price analysis
+- The full closed-trade history with ticker search, market and side filters, sortable columns, and pagination
+- An expandable IRS Form 8949 summary
+- All supplied color palettes, with the selected theme saved in the browser
+
+Alpine.js is bundled with the package and served locally; the dashboard does not load scripts, fonts, or transaction data from third-party services. The modern server binds to `127.0.0.1` by default to keep the full trade history local.
 
 ## Market Categorization
 
@@ -291,13 +322,44 @@ for trade in recent:
 
 For developers who want to contribute or run the test suite:
 
-### Installing Dependencies
+### Quick Start with Make
+
+The project includes a Makefile that automates the common build workflow. From the project root:
+
+```bash
+make
+```
+
+This runs the full pipeline: **test → build → install → verify**. It uses `.venv/bin/python` by default, so make sure your virtual environment is set up first:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Individual targets are also available:
+
+```bash
+make test              # Run the test suite
+make build             # Build wheel and source distribution
+make install           # Build and install the matching wheel into .venv
+make verify-installed  # Check installed version and packaged assets
+```
+
+To use a different Python interpreter:
+
+```bash
+make PYTHON=python3
+```
+
+### Installing Dependencies Manually
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Running Tests
+### Running Tests Manually
 
 The project uses pytest for testing. Run the full test suite:
 
@@ -356,4 +418,3 @@ This project is hosted in two locations, GitHub and my home Forgejo server, cont
 ## License
 
 [MIT](LICENSE)
-

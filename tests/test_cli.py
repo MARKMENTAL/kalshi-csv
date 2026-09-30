@@ -116,6 +116,27 @@ def test_cli_legacy_web_flag_in_help():
     assert "--legacy-web-port" in result.stdout
 
 
+def test_cli_modern_web_flags_in_help():
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", "--help"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "--modern-web" in result.stdout
+    assert "--modern-web-port" in result.stdout
+
+
+def test_cli_web_modes_are_mutually_exclusive(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--legacy-web", "--modern-web"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "not allowed with argument" in result.stderr
+
+
 def test_cli_legacy_web_port_default_in_help():
     result = subprocess.run(
         [sys.executable, "-m", "kalshi_csv.cli", "--help"],

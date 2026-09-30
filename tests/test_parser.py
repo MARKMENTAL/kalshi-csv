@@ -118,6 +118,61 @@ def test_market_breakdown_sorted_by_trades(sample_csv):
     assert trade_counts == sorted(trade_counts, reverse=True)
 
 
+def test_sp500_price_tier_breakdown_groups_entry_prices_and_excludes_other_markets():
+    kalshi = KalshiCSV("unused.csv")
+    entries_and_pnls = [
+        (0.399, 1.0),
+        (0.40, -0.5),
+        (0.4001, -0.25),
+        (0.69, 0.0),
+        (0.70, 2.0),
+        (0.7001, -1.0),
+        (0.85, 3.0),
+        (0.8501, -2.0),
+        (1.00, 4.0),
+        (-0.01, 100.0),
+        (1.01, 100.0),
+    ]
+    kalshi.trades = [
+        {
+            "entry": entry,
+            "pnl_with_fees": pnl,
+            "market_category": "S&P 500 (INXU Intraday)",
+        }
+        for entry, pnl in entries_and_pnls
+    ]
+    kalshi.trades.append({
+        "entry": 0.50,
+        "pnl_with_fees": 100.0,
+        "market_category": "Other Markets",
+    })
+
+    breakdown = kalshi.sp500_price_tier_breakdown()
+
+    assert [item["price_tier"] for item in breakdown] == [
+        "<=$0.40 (Out-of-the-Money Speculative)",
+        ">$0.40-$0.70 (At-the-Money / Coincident)",
+        ">$0.70-$0.85 (Likely / Moderate ITM)",
+        ">$0.85 (Deep ITM / High Probability)",
+    ]
+    assert [item["trades"] for item in breakdown] == [2, 3, 2, 2]
+    assert [item["win_rate"] for item in breakdown] == pytest.approx([50.0, 100 / 3, 50.0, 50.0])
+    assert [item["average_win"] for item in breakdown] == [1.0, 2.0, 3.0, 4.0]
+    assert [item["average_loss"] for item in breakdown] == [-0.5, -0.25, -1.0, -2.0]
+    assert [item["net_pnl"] for item in breakdown] == [0.5, 1.75, 2.0, 2.0]
+
+
+def test_sp500_price_tier_breakdown_is_empty_without_sp500_trades():
+    kalshi = KalshiCSV("unused.csv")
+    kalshi.trades = [{
+        "entry": 0.50,
+        "pnl_with_fees": 1.0,
+        "market_category": "Other Markets",
+    }]
+
+    assert kalshi.sp500_price_tier_breakdown() == []
+
+
 def test_recent_closed_positions_returns_list(sample_csv):
     kalshi = KalshiCSV(sample_csv)
     kalshi.parse()

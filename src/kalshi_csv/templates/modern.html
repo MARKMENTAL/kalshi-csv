@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>Kalshi Portfolio Dashboard</title>
+    <link rel="stylesheet" href="/static/modern.css">
+    <script id="dashboard-data" type="application/json">{{DASHBOARD_DATA}}</script>
+    <script src="/static/dashboard.js" defer></script>
+    <script src="/static/alpine.min.js" defer></script>
+</head>
+<body>
+<div class="app-shell" x-data="dashboardApp()" x-init="init()">
+    <header class="topbar">
+        <a class="brand" href="#top" aria-label="Kalshi portfolio dashboard home">
+            <span class="brand-mark">K</span>
+            <span class="brand-copy"><strong>KALSHI</strong><small>PORTFOLIO INTELLIGENCE</small></span>
+        </a>
+        <div class="topbar-actions">
+            <label class="theme-control">
+                <span class="sr-only">Dashboard color theme</span>
+                <span class="theme-icon" aria-hidden="true">◐</span>
+                <select x-model="selectedTheme" @change="applyTheme()" aria-label="Color theme">
+                    <template x-for="theme in themes" :key="theme.name">
+                        <option :value="theme.name" x-text="theme.name"></option>
+                    </template>
+                </select>
+            </label>
+            <span class="local-badge"><span></span> PRIVATE · LOCAL</span>
+        </div>
+    </header>
+
+    <main id="top" class="dashboard-main">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">ACCOUNT OVERVIEW <span class="eyebrow-line"></span></p>
+                <h1>Portfolio <span>dashboard</span></h1>
+                <p class="page-subtitle">A clear view of your realized performance, market mix, and closed positions.</p>
+            </div>
+            <div class="period-card">
+                <span class="period-label">DATA SOURCE</span>
+                <strong class="source-name" x-text="filename"></strong>
+                <span class="period-date">Period ending <b x-text="periodEnd"></b></span>
+            </div>
+        </section>
+
+        <section class="metric-grid" aria-label="Portfolio summary">
+            <article class="metric-card metric-primary">
+                <div class="metric-top"><span>NET REALIZED P&amp;L</span><span class="metric-icon">↗</span></div>
+                <strong class="metric-value" :class="pnlClass(summary.total_pnl)" x-text="formatPnl(summary.total_pnl)"></strong>
+                <span class="metric-foot">After <b x-text="formatCurrency(summary.total_fees)"></b> in exchange fees</span>
+            </article>
+            <article class="metric-card">
+                <div class="metric-top"><span>WIN RATE</span><span class="metric-icon">◉</span></div>
+                <strong class="metric-value" x-text="formatPercent(summary.win_rate)"></strong>
+                <span class="metric-foot"><b x-text="summary.wins"></b> wins <i>·</i> <b x-text="summary.losses"></b> losses <i>·</i> <b x-text="summary.pushes"></b> pushes</span>
+            </article>
+            <article class="metric-card">
+                <div class="metric-top"><span>CLOSED CONTRACTS</span><span class="metric-icon">▤</span></div>
+                <strong class="metric-value" x-text="summary.trade_count.toLocaleString()"></strong>
+                <span class="metric-foot">Trades included in this statement</span>
+            </article>
+            <article class="metric-card best-worst-card">
+                <div class="metric-top"><span>BEST / WORST TRADE</span><span class="metric-icon">⌁</span></div>
+                <div class="best-worst-values">
+                    <span><b class="positive-text" x-text="formatPnl(summary.best_pnl)"></b><small>BEST</small></span>
+                    <span><b class="negative-text" x-text="formatPnl(summary.worst_pnl)"></b><small>WORST</small></span>
+                </div>
+                <span class="metric-foot truncate" x-text="summary.best_category + ' / ' + summary.worst_category"></span>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <article class="panel market-panel">
+                <div class="section-heading">
+                    <div><p class="eyebrow">WHERE RESULTS CAME FROM</p><h2>Market performance</h2></div>
+                    <span class="section-count" x-text="markets.length + ' categories'"></span>
+                </div>
+                <div class="market-chart" role="img" aria-label="Net profit and loss by market category">
+                    <template x-for="market in markets" :key="market.category">
+                        <div class="market-row">
+                            <div class="market-label"><span x-text="market.category"></span><b x-text="formatPnl(market.net_pnl)" :class="pnlClass(market.net_pnl)"></b></div>
+                            <div class="bar-track">
+                                <span class="bar-zero"></span>
+                                <span class="bar-fill" :class="market.net_pnl >= 0 ? 'bar-positive' : 'bar-negative'" :style="marketBarStyle(market.net_pnl)"></span>
+                            </div>
+                            <div class="market-meta"><span x-text="market.trades + ' trades'"></span><span x-text="formatPercent(market.win_rate) + ' wins'"></span></div>
+                        </div>
+                    </template>
+                    <p class="empty-state" x-show="markets.length === 0">No market performance to display.</p>
+                </div>
+            </article>
+
+            <article class="panel composition-panel">
+                <div class="section-heading">
+                    <div><p class="eyebrow">OUTCOME DISTRIBUTION</p><h2>Trade record</h2></div>
+                </div>
+                <div class="record-total"><strong x-text="summary.trade_count.toLocaleString()"></strong><span>total trades</span></div>
+                <div class="record-bar" role="img" :aria-label="summary.wins + ' wins, ' + summary.losses + ' losses, ' + summary.pushes + ' pushes'">
+                    <span class="record-win" :style="recordWidth(summary.wins)"></span>
+                    <span class="record-loss" :style="recordWidth(summary.losses)"></span>
+                    <span class="record-push" :style="recordWidth(summary.pushes)"></span>
+                </div>
+                <div class="record-legend">
+                    <span><i class="legend-dot win-dot"></i>Wins <b x-text="summary.wins"></b></span>
+                    <span><i class="legend-dot loss-dot"></i>Losses <b x-text="summary.losses"></b></span>
+                    <span><i class="legend-dot push-dot"></i>Pushes <b x-text="summary.pushes"></b></span>
+                </div>
+                <div class="record-note"><span>Average per contract</span><b :class="pnlClass(summary.average_pnl)" x-text="formatPnl(summary.average_pnl)"></b></div>
+            </article>
+        </section>
+
+        <section class="panel sp500-panel" x-show="sp500Tiers.length" x-cloak>
+            <div class="section-heading">
+                <div><p class="eyebrow">INDEX CONTRACTS · ENTRY PRICE ANALYSIS</p><h2>S&amp;P 500 price tiers</h2></div>
+                <span class="section-count">P&amp;L after fees</span>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table tier-table">
+                    <thead><tr><th>Entry price tier</th><th class="align-right">Trade count</th><th class="align-right">Win rate</th><th class="align-right">Average win</th><th class="align-right">Average loss</th><th class="align-right">Total net P&amp;L</th></tr></thead>
+                    <tbody>
+                        <template x-for="tier in sp500Tiers" :key="tier.price_tier">
+                            <tr>
+                                <td class="tier-name" x-text="tier.price_tier"></td>
+                                <td class="align-right mono" x-text="tier.trades"></td>
+                                <td class="align-right mono" x-text="formatPercent(tier.win_rate)"></td>
+                                <td class="align-right mono positive-text" x-text="formatPnl(tier.average_win)"></td>
+                                <td class="align-right mono negative-text" x-text="formatPnl(tier.average_loss)"></td>
+                                <td class="align-right mono strong" :class="pnlClass(tier.net_pnl)" x-text="formatPnl(tier.net_pnl)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel positions-panel">
+            <div class="section-heading positions-heading">
+                <div><p class="eyebrow">FULL ACCOUNT HISTORY</p><h2>Closed positions</h2></div>
+                <span class="section-count" x-text="filteredTrades.length.toLocaleString() + ' of ' + trades.length.toLocaleString() + ' trades'"></span>
+            </div>
+            <div class="table-toolbar">
+                <label class="search-control"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search trades</span><input type="search" x-model="search" @input="page = 1" placeholder="Search ticker or market..."></label>
+                <label class="select-control"><span class="sr-only">Filter by market</span><select x-model="categoryFilter" @change="page = 1"><option value="">All markets</option><template x-for="category in categories" :key="category"><option :value="category" x-text="category"></option></template></select></label>
+                <label class="select-control"><span class="sr-only">Filter by side</span><select x-model="sideFilter" @change="page = 1"><option value="">All sides</option><option value="YES">YES</option><option value="NO">NO</option></select></label>
+            </div>
+            <div class="table-wrap positions-table-wrap">
+                <table class="data-table positions-table">
+                    <thead><tr>
+                        <th><button @click="sortBy('close_timestamp')">Closed <span x-text="sortIndicator('close_timestamp')"></span></button></th>
+                        <th><button @click="sortBy('ticker')">Ticker <span x-text="sortIndicator('ticker')"></span></button></th>
+                        <th><button @click="sortBy('market_category')">Market <span x-text="sortIndicator('market_category')"></span></button></th>
+                        <th><button @click="sortBy('side')">Side <span x-text="sortIndicator('side')"></span></button></th>
+                        <th class="align-right"><button @click="sortBy('qty')">Qty <span x-text="sortIndicator('qty')"></span></button></th>
+                        <th class="align-right"><button @click="sortBy('entry')">Entry <span x-text="sortIndicator('entry')"></span></button></th>
+                        <th class="align-right"><button @click="sortBy('exit')">Exit <span x-text="sortIndicator('exit')"></span></button></th>
+                        <th class="align-right"><button @click="sortBy('pnl')">Net P&amp;L <span x-text="sortIndicator('pnl')"></span></button></th>
+                    </tr></thead>
+                    <tbody>
+                        <template x-for="(trade, index) in paginatedTrades" :key="trade.ticker + '-' + trade.close_timestamp + '-' + index">
+                            <tr>
+                                <td class="date-cell mono" x-text="formatDate(trade.close_timestamp)"></td>
+                                <td class="ticker-cell mono" x-text="trade.ticker"></td>
+                                <td class="market-cell" x-text="trade.market_category"></td>
+                                <td><span class="side-pill" :class="trade.side === 'YES' ? 'side-yes' : 'side-no'" x-text="trade.side"></span></td>
+                                <td class="align-right mono" x-text="Number(trade.qty).toFixed(2)"></td>
+                                <td class="align-right mono" x-text="formatCurrency(trade.entry)"></td>
+                                <td class="align-right mono" x-text="formatCurrency(trade.exit)"></td>
+                                <td class="align-right mono strong" :class="pnlClass(trade.pnl)" x-text="formatPnl(trade.pnl)"></td>
+                            </tr>
+                        </template>
+                        <tr x-show="filteredTrades.length === 0"><td class="empty-cell" colspan="8">No trades match these filters.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span class="pagination-caption" x-text="paginationCaption"></span>
+                <div class="pagination-controls">
+                    <label class="page-size-control"><span>Rows</span><select x-model.number="pageSize" @change="page = 1"><option value="15">15</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
+                    <button class="page-button" @click="page = Math.max(1, page - 1)" :disabled="page <= 1" aria-label="Previous page">←</button>
+                    <span class="page-number"><b x-text="page"></b> / <span x-text="totalPages"></span></span>
+                    <button class="page-button" @click="page = Math.min(totalPages, page + 1)" :disabled="page >= totalPages" aria-label="Next page">→</button>
+                </div>
+            </div>
+        </section>
+
+        <details class="panel tax-panel">
+            <summary><span><span class="eyebrow">RECORDKEEPING</span><strong>IRS Form 8949 / Schedule D summary</strong></span><span class="summary-chevron" aria-hidden="true">⌄</span></summary>
+            <div class="tax-grid">
+                <div><span>Box to check</span><b x-text="irs.box"></b></div>
+                <div><span>Description</span><b x-text="irs.description"></b></div>
+                <div><span>Date acquired</span><b>VARIOUS</b></div>
+                <div><span>Date sold</span><b>VARIOUS</b></div>
+                <div><span>Gross proceeds</span><b x-text="formatCurrency(irs.gross_proceeds)"></b></div>
+                <div><span>Cost or other basis</span><b x-text="formatCurrency(irs.cost_basis)"></b></div>
+                <div class="tax-gain"><span>Gain or (loss)</span><b :class="pnlClass(irs.gain_or_loss)" x-text="formatPnl(irs.gain_or_loss)"></b></div>
+            </div>
+        </details>
+
+        <footer class="page-footer"><span>Rendered locally with kalshi-csv v{{APP_VERSION}} · <a href="/static/ALPINE-LICENSE.md">Alpine.js 3.17.1 · MIT</a></span><span>Transaction data stays on this machine.</span></footer>
+    </main>
+</div>
+</body>
+</html>

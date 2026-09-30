@@ -1,6 +1,9 @@
 import html
+import json
+from pathlib import Path
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlsplit
 
 from . import __version__
 
@@ -9,6 +12,7 @@ def render_portfolio_html(kalshi, csv_filename):
     """Renders the full HTML 4.01 portfolio page from parsed Kalshi data."""
     summary = kalshi.summary
     market_breakdown = kalshi.market_breakdown()
+    sp500_price_tiers = kalshi.sp500_price_tier_breakdown()
     recent_positions = kalshi.recent_closed_positions(20)
 
     period_end = summary["latest_close_date"]
@@ -63,6 +67,55 @@ def render_portfolio_html(kalshi, csv_filename):
         if i < len(market_breakdown) - 1:
             rows_html += """
                 <tr><td colspan="4"><hr size="1" color="#E0E0E0" noshade></td></tr>"""
+
+    sp500_tier_rows_html = ""
+    for i, item in enumerate(sp500_price_tiers):
+        pnl = item["net_pnl"]
+        pnl_color = "#006600" if pnl >= 0 else "#990000"
+        average_win = item["average_win"]
+        average_loss = item["average_loss"]
+        average_win_str = f"+${average_win:.2f}" if average_win is not None else "N/A"
+        average_loss_str = f"-${abs(average_loss):.2f}" if average_loss is not None else "N/A"
+        average_win_color = "#006600" if average_win is not None else "#666666"
+        average_loss_color = "#990000" if average_loss is not None else "#666666"
+        pnl_str = f"{'+' if pnl >= 0 else '-'}${abs(pnl):.2f}"
+        sp500_tier_rows_html += f"""
+                <tr>
+                    <td align="left"><font face="Geneva, Verdana, sans-serif" size="2">{html.escape(item['price_tier'])}</font></td>
+                    <td align="right"><font face="Courier New, Courier, monospace" size="2">{item['trades']}</font></td>
+                    <td align="right"><font face="Courier New, Courier, monospace" size="2">{item['win_rate']:.1f}%</font></td>
+                    <td align="right"><font face="Courier New, Courier, monospace" size="2" color="{average_win_color}"><b>{average_win_str}</b></font></td>
+                    <td align="right"><font face="Courier New, Courier, monospace" size="2" color="{average_loss_color}"><b>{average_loss_str}</b></font></td>
+                    <td align="right"><font face="Courier New, Courier, monospace" size="2" color="{pnl_color}"><b>{pnl_str}</b></font></td>
+                </tr>"""
+        if i < len(sp500_price_tiers) - 1:
+            sp500_tier_rows_html += """
+                <tr><td colspan="6"><hr size="1" color="#E0E0E0" noshade></td></tr>"""
+
+    sp500_tier_section_html = ""
+    if sp500_price_tiers:
+        sp500_tier_section_html = f"""
+    <tr><td><br><hr size="1" color="#CCCCCC" noshade><br></td></tr>
+
+    <tr>
+        <td>
+            <font face="Georgia, Times New Roman, serif" size="3"><b>S&amp;P 500 Contract Performance by Entry Price Tier</b></font>
+            <br><br>
+
+            <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                <tr bgcolor="#EEEEEE">
+                    <td width="34%" align="left"><font face="Geneva, Verdana, sans-serif" size="1"><b>ENTRY PRICE TIER</b></font></td>
+                    <td width="12%" align="right"><font face="Geneva, Verdana, sans-serif" size="1"><b>TRADE COUNT</b></font></td>
+                    <td width="12%" align="right"><font face="Geneva, Verdana, sans-serif" size="1"><b>WIN RATE</b></font></td>
+                    <td width="14%" align="right"><font face="Geneva, Verdana, sans-serif" size="1"><b>AVERAGE WIN</b></font></td>
+                    <td width="14%" align="right"><font face="Geneva, Verdana, sans-serif" size="1"><b>AVERAGE LOSS</b></font></td>
+                    <td width="14%" align="right"><font face="Geneva, Verdana, sans-serif" size="1"><b>TOTAL NET P&amp;L</b></font></td>
+                </tr>
+                {sp500_tier_rows_html}
+            </table>
+        </td>
+    </tr>
+"""
 
     positions_html = ""
     for trade in recent_positions:
@@ -213,6 +266,8 @@ def render_portfolio_html(kalshi, csv_filename):
         </td>
     </tr>
 
+    {sp500_tier_section_html}
+
     <tr><td><br><hr size="1" color="#CCCCCC" noshade><br></td></tr>
 
     <tr>
@@ -254,6 +309,65 @@ def render_portfolio_html(kalshi, csv_filename):
     return page
 
 
+def render_modern_dashboard_html(kalshi, csv_filename):
+    """Renders the interactive HTML5 dashboard and its locally supplied data."""
+    summary = kalshi.summary
+    best_trade = summary["best_trade"]
+    worst_trade = summary["worst_trade"]
+    trade_count = summary["trade_count"]
+
+    dashboard_data = {
+        "filename": Path(csv_filename).name,
+        "period_end": (
+            summary["latest_close_date"].strftime("%B %d, %Y")
+            if summary["latest_close_date"] else "N/A"
+        ),
+        "summary": {
+            "total_pnl": summary["total_pnl_with_fees"],
+            "total_fees": summary["total_fees"],
+            "wins": summary["wins"],
+            "losses": summary["losses"],
+            "pushes": summary["pushes"],
+            "trade_count": trade_count,
+            "win_rate": summary["wins"] / trade_count * 100 if trade_count else 0,
+            "average_pnl": summary["total_pnl_with_fees"] / trade_count if trade_count else 0,
+            "best_pnl": best_trade["pnl_with_fees"] if best_trade else 0,
+            "worst_pnl": worst_trade["pnl_with_fees"] if worst_trade else 0,
+            "best_category": best_trade["market_category"] if best_trade else "N/A",
+            "worst_category": worst_trade["market_category"] if worst_trade else "N/A",
+        },
+        "markets": kalshi.market_breakdown(),
+        "sp500_tiers": kalshi.sp500_price_tier_breakdown(),
+        "trades": [
+            {
+                "ticker": trade["ticker"],
+                "market_category": trade["market_category"],
+                "side": trade["side"],
+                "qty": trade["qty"],
+                "entry": trade["entry"],
+                "exit": trade["exit"],
+                "fees": trade["open_fees"] + trade["close_fees"],
+                "pnl": trade["pnl_with_fees"],
+                "close_timestamp": trade["close_timestamp"].isoformat() if trade["close_timestamp"] else "",
+            }
+            for trade in kalshi.trades
+        ],
+        "irs": kalshi.irs_summary(),
+        "themes": json.loads((Path(__file__).parent / "themes.json").read_text(encoding="utf-8")),
+    }
+
+    # Keep CSV-controlled values inside the JSON data block, not executable markup.
+    serialized_data = json.dumps(dashboard_data, separators=(",", ":"), ensure_ascii=True)
+    serialized_data = (
+        serialized_data.replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
+    template_path = Path(__file__).parent / "templates" / "modern.html"
+    template = template_path.read_text(encoding="utf-8")
+    return template.replace("{{DASHBOARD_DATA}}", serialized_data).replace("{{APP_VERSION}}", __version__)
+
+
 class LegacyWebHandler(BaseHTTPRequestHandler):
     """HTTP request handler that serves the legacy portfolio page."""
 
@@ -286,6 +400,69 @@ class LegacyWebServer:
         server = HTTPServer((self.host, self.port), LegacyWebHandler)
         server.html_content = self.html_content
         print(f"Serving legacy portfolio view at http://{self.host}:{self.port}/")
+        print("Press Ctrl+C to stop.")
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\nShutting down server.")
+            server.server_close()
+
+
+MODERN_STATIC_ASSETS = {
+    "/static/modern.css": ("modern.css", "text/css; charset=utf-8"),
+    "/static/dashboard.js": ("dashboard.js", "application/javascript; charset=utf-8"),
+    "/static/alpine.min.js": ("alpine.min.js", "application/javascript; charset=utf-8"),
+    "/static/ALPINE-LICENSE.md": ("ALPINE-LICENSE.md", "text/markdown; charset=utf-8"),
+}
+
+
+class ModernWebHandler(BaseHTTPRequestHandler):
+    """HTTP request handler for the HTML5 dashboard and bundled assets."""
+
+    def do_GET(self):
+        request_path = urlsplit(self.path).path
+        if request_path in ("/", "/index.html"):
+            self._send_content(200, "text/html; charset=utf-8", self.server.html_content.encode("utf-8"))
+            return
+
+        asset = MODERN_STATIC_ASSETS.get(request_path)
+        if asset:
+            filename, content_type = asset
+            asset_path = Path(__file__).parent / "static" / filename
+            self._send_content(200, content_type, asset_path.read_bytes())
+            return
+
+        self.send_error(404, "Not Found")
+
+    def _send_content(self, status, content_type, content):
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(content)
+
+    def log_message(self, format, *args):
+        pass
+
+
+class ModernWebServer:
+    """HTTP server for the responsive, interactive portfolio dashboard."""
+
+    def __init__(self, kalshi, csv_filename, host="0.0.0.0", port=8080):
+        self.kalshi = kalshi
+        self.csv_filename = csv_filename
+        self.host = host
+        self.port = port
+        self.html_content = render_modern_dashboard_html(kalshi, csv_filename)
+
+    def serve(self):
+        """Starts the dashboard server and blocks until interrupted."""
+        server = HTTPServer((self.host, self.port), ModernWebHandler)
+        server.html_content = self.html_content
+        print(f"Serving modern portfolio dashboard at http://{self.host}:{self.port}/")
         print("Press Ctrl+C to stop.")
         try:
             server.serve_forever()

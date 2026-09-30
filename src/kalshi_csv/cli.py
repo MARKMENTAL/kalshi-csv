@@ -44,16 +44,28 @@ def main():
         action="store_true",
         help="Use ASCII characters instead of Unicode box-drawing",
     )
-    parser.add_argument(
+    web_mode = parser.add_mutually_exclusive_group()
+    web_mode.add_argument(
         "--legacy-web",
         action="store_true",
         help="Start a legacy web server (HTML 4.01) to view portfolio in browser",
+    )
+    web_mode.add_argument(
+        "--modern-web",
+        action="store_true",
+        help="Start the interactive HTML5 portfolio dashboard",
     )
     parser.add_argument(
         "--legacy-web-port",
         type=int,
         default=8080,
         help="Port for legacy web server (default: 8080)",
+    )
+    parser.add_argument(
+        "--modern-web-port",
+        type=int,
+        default=8080,
+        help="Port for modern web dashboard (default: 8080)",
     )
 
     args = parser.parse_args()
@@ -67,6 +79,13 @@ def main():
         from .web import LegacyWebServer
         csv_filename = os.path.basename(args.csv_path)
         server = LegacyWebServer(kalshi, csv_filename, port=args.legacy_web_port)
+        server.serve()
+        return
+
+    if args.modern_web:
+        from .web import ModernWebServer
+        csv_filename = os.path.basename(args.csv_path)
+        server = ModernWebServer(kalshi, csv_filename, port=args.modern_web_port)
         server.serve()
         return
 

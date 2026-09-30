@@ -6,6 +6,15 @@ from datetime import datetime
 from .categories import categorize_ticker
 
 
+SP500_MARKET_CATEGORY = "S&P 500 (INXU Intraday)"
+SP500_PRICE_TIERS = (
+    "<=$0.40 (Out-of-the-Money Speculative)",
+    ">$0.40-$0.70 (At-the-Money / Coincident)",
+    ">$0.70-$0.85 (Likely / Moderate ITM)",
+    ">$0.85 (Deep ITM / High Probability)",
+)
+
+
 class KalshiCSV:
     """Parses Kalshi transaction CSV data and calculates tax-relevant aggregates."""
 
@@ -159,6 +168,64 @@ class KalshiCSV:
             })
 
         return sorted(breakdown, key=lambda x: x["trades"], reverse=True)
+
+    def sp500_price_tier_breakdown(self):
+        """Returns S&P 500 trade performance grouped by contract entry price."""
+        tiers = {
+            label: {
+                "trades": 0,
+                "wins": 0,
+                "losses": 0,
+                "win_pnl": 0.0,
+                "loss_pnl": 0.0,
+                "net_pnl": 0.0,
+            }
+            for label in SP500_PRICE_TIERS
+        }
+
+        for trade in self.trades:
+            if trade["market_category"] != SP500_MARKET_CATEGORY:
+                continue
+
+            entry = trade["entry"]
+            if not 0 <= entry <= 1:
+                continue
+
+            if entry <= 0.40:
+                label = SP500_PRICE_TIERS[0]
+            elif entry <= 0.70:
+                label = SP500_PRICE_TIERS[1]
+            elif entry <= 0.85:
+                label = SP500_PRICE_TIERS[2]
+            else:
+                label = SP500_PRICE_TIERS[3]
+
+            pnl = trade["pnl_with_fees"]
+            tier = tiers[label]
+            tier["trades"] += 1
+            tier["net_pnl"] += pnl
+            if pnl > 0:
+                tier["wins"] += 1
+                tier["win_pnl"] += pnl
+            elif pnl < 0:
+                tier["losses"] += 1
+                tier["loss_pnl"] += pnl
+
+        breakdown = []
+        for label, data in tiers.items():
+            if data["trades"] == 0:
+                continue
+
+            breakdown.append({
+                "price_tier": label,
+                "trades": data["trades"],
+                "win_rate": data["wins"] / data["trades"] * 100,
+                "average_win": data["win_pnl"] / data["wins"] if data["wins"] else None,
+                "average_loss": data["loss_pnl"] / data["losses"] if data["losses"] else None,
+                "net_pnl": data["net_pnl"],
+            })
+
+        return breakdown
 
     def recent_closed_positions(self, n=20):
         """Returns the last n trades sorted by close_timestamp descending."""

@@ -28,5 +28,5 @@ requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==15.0.0
 SecretStorage==3.5.0
-twine==6.2.0
+twine==7.0.0
 urllib3==2.7.0

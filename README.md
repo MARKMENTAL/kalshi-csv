@@ -228,7 +228,7 @@ The modern dashboard is a separate HTML5 interface; `--legacy-web` continues to 
 - An expandable IRS Form 8949 summary
 - All supplied color palettes, with the selected theme saved in the browser
 
-Alpine.js is bundled with the package and served locally; the dashboard does not load scripts, fonts, or transaction data from third-party services. The modern server binds to `127.0.0.1` by default to keep the full trade history local.
+Alpine.js is bundled with the package and served locally; the dashboard does not load scripts, fonts, or transaction data from third-party services. 
 
 ## Market Categorization
 

@@ -126,7 +126,7 @@ Internal Tracked Net P&L:  $+0.26
 │ MLB Baseball                        │ 44         │ 40.9%        │ $-13.06          │
 │ NBA Summer League                   │ 43         │ 46.5%        │ $-7.09           │
 │ NPB Baseball (Japan)                │ 40         │ 47.5%        │ $-10.68          │
-│ Multivariate Events             │ 23         │ 8.7%         │ $-13.48          │
+│ Multivariate Events                 │ 23         │ 8.7%         │ $-13.48          │
 │ WNBA Basketball                     │ 6          │ 0.0%         │ $-5.87           │
 └─────────────────────────────────────┴────────────┴──────────────┴──────────────────┘
 
@@ -173,7 +173,7 @@ Internal Tracked Net P&L:  $+0.26
 | MLB Baseball                        | 44         | 40.9%        | $-13.06          |
 | NBA Summer League                   | 43         | 46.5%        | $-7.09           |
 | NPB Baseball (Japan)                | 40         | 47.5%        | $-10.68          |
-| Multivariate Events             | 23         | 8.7%         | $-13.48          |
+| Multivariate Events                 | 23         | 8.7%         | $-13.48          |
 | WNBA Basketball                     | 6          | 0.0%         | $-5.87           |
 +-------------------------------------+------------+--------------+------------------+
 

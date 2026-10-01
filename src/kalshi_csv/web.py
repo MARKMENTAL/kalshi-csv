@@ -338,6 +338,7 @@ def render_modern_dashboard_html(kalshi, csv_filename):
         },
         "markets": kalshi.market_breakdown(),
         "sp500_tiers": kalshi.sp500_price_tier_breakdown(),
+        "sp500_hourly": kalshi.sp500_hourly_performance(),
         "trades": [
             {
                 "ticker": trade["ticker"],

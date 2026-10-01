@@ -148,6 +148,50 @@ h2 { margin: 0; font: 650 19px/1.25 Manrope, "Segoe UI", sans-serif; letter-spac
 .data-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
 .tier-name { min-width: 285px; font-size: 11px !important; font-weight: 600; }
 .align-right { text-align: right !important; }
+.sp500-suggestion-panel { margin-bottom: 18px; }
+.historical-note { max-width: 900px; margin: -8px 0 16px; color: var(--muted); font-size: 11px; }
+.suggestion-button, .suggestion-dismiss {
+    min-height: 38px; padding: 0 14px; border: 1px solid var(--accent); border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface-raised)); color: var(--app-fg);
+    font-size: 11px; font-weight: 650; transition: background .2s ease, border-color .2s ease;
+}
+.suggestion-button:hover, .suggestion-dismiss:hover { background: color-mix(in srgb, var(--accent) 22%, var(--surface-raised)); }
+.suggestion-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 9px; color: var(--muted); font-size: 11px; }
+.suggestion-result { max-width: 900px; padding: 16px; border: 1px solid color-mix(in srgb, var(--positive) 35%, var(--border)); border-radius: 11px; background: color-mix(in srgb, var(--positive) 5%, var(--surface-raised)); }
+.suggestion-row { display: grid; grid-template-columns: 48px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.suggestion-row:last-of-type { border-bottom: 0; }
+.suggestion-rank { display: flex; align-items: flex-start; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-raised); color: var(--accent); font: 700 13px/1 "DM Mono", monospace; }
+.suggestion-rank span { margin-top: 11px; }
+.suggestion-primary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-bottom: 12px; }
+.suggestion-primary div, .suggestion-stats div { display: grid; gap: 4px; min-width: 0; }
+.suggestion-primary span, .suggestion-stats span { color: var(--muted); font: 500 8px "DM Mono", monospace; letter-spacing: .08em; }
+.suggestion-primary strong { font-size: 12px; }
+.suggestion-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.suggestion-stats strong { font-size: 11px; }
+.suggestion-trades { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.suggestion-trades-toggle {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised);
+    color: var(--muted); font-size: 10px; font-weight: 600;
+}
+.suggestion-trades-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.suggestion-trades-chevron { font-size: 8px; }
+.suggestion-trades-list { margin-top: 10px; display: grid; gap: 8px; }
+.suggestion-trade {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-raised);
+}
+.suggestion-trade-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.suggestion-trade-date { color: var(--muted); font-size: 10px; }
+.suggestion-trade-ticker { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.suggestion-trade-side {
+    display: inline-block; min-width: 30px; padding: 2px 5px; border: 1px solid var(--border);
+    border-radius: 4px; text-align: center; font: 600 9px "DM Mono", monospace;
+}
+.suggestion-trade-stats { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 10px; }
+.suggestion-trade-stats b { color: var(--app-fg); font-size: 10px; }
+.suggestion-dismiss { min-height: 30px; padding: 0 10px; border-color: var(--border); background: transparent; color: var(--muted); font-size: 10px; }
 
 .positions-panel { padding: 0; overflow: hidden; }
 .positions-heading { margin: 0; padding: 22px 22px 16px; }
@@ -218,6 +262,7 @@ h2 { margin: 0; font: 650 19px/1.25 Manrope, "Segoe UI", sans-serif; letter-spac
     .content-grid { grid-template-columns: 1fr; }
     .market-chart { grid-template-columns: 1fr; }
     .panel { padding: 18px; }
+    .suggestion-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .positions-panel { padding: 0; }
     .positions-heading { padding: 18px 18px 14px; }
     .table-toolbar { padding: 0 18px 14px; }

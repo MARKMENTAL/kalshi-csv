@@ -135,6 +135,62 @@
             </div>
         </section>
 
+        <section class="panel sp500-suggestion-panel" x-show="sp500Tiers.length" x-cloak>
+            <div class="section-heading">
+                <div><p class="eyebrow">HISTORICAL ENTRY TIMING</p><h2>S&amp;P 500 top hourly setups</h2></div>
+                <span class="section-count">P&amp;L after fees</span>
+            </div>
+            <p class="historical-note">This historical summary is not a forecast or trading advice. Each suggested tier/hour needs at least five trades and positive net P&amp;L; candidates are ranked by win rate, then net P&amp;L. Opening times are converted to America/New York.</p>
+            <div class="suggestion-empty" x-show="sp500Suggestions.length === 0">
+                No historical setup meets the minimum sample and positive net P&amp;L requirements.
+            </div>
+            <button class="suggestion-button" x-show="sp500Suggestions.length > 0 && !sp500SuggestionRevealed" @click="sp500SuggestionRevealed = true">Show top 5 historical setups</button>
+            <div class="suggestion-result" x-show="sp500Suggestions.length > 0 && sp500SuggestionRevealed" x-cloak aria-live="polite">
+                <template x-for="(setup, index) in sp500Suggestions" :key="setup.price_tier + '-' + setup.target_hour">
+                    <div class="suggestion-row">
+                        <div class="suggestion-rank"><span x-text="'#' + (index + 1)"></span></div>
+                        <div class="suggestion-details">
+                            <div class="suggestion-primary">
+                                <div><span>ENTRY PRICE TIER</span><strong x-text="setup.price_tier"></strong></div>
+                                <div><span>CONTRACT TARGET HOUR</span><strong class="mono" x-text="setup.target_hour"></strong></div>
+                            </div>
+                            <div class="suggestion-stats">
+                                <div><span>TRADES</span><strong class="mono" x-text="setup.trades"></strong></div>
+                                <div><span>RECORD (W–L–P)</span><strong class="mono" x-text="setup.wins + '–' + setup.losses + '–' + setup.pushes"></strong></div>
+                                <div><span>WIN RATE</span><strong class="mono" x-text="formatPercent(setup.win_rate)"></strong></div>
+                                <div><span>NET P&amp;L</span><strong class="mono" :class="pnlClass(setup.net_pnl)" x-text="formatPnl(setup.net_pnl)"></strong></div>
+                                <div><span>AVG S&amp;P OPEN</span><strong class="mono" x-text="setup.avg_sp500_open != null ? formatSp500Price(setup.avg_sp500_open) : 'N/A'"></strong></div>
+                                <div><span>AVG S&amp;P CLOSE</span><strong class="mono" x-text="setup.avg_sp500_close != null ? formatSp500Price(setup.avg_sp500_close) : 'N/A'"></strong></div>
+                            </div>
+                            <div class="suggestion-trades" x-show="setup.top_trades && setup.top_trades.length > 0">
+                                <button class="suggestion-trades-toggle" @click="setup.tradesRevealed = !setup.tradesRevealed">
+                                    <span x-text="setup.tradesRevealed ? 'Hide top winning trades' : 'Show top winning trades'"></span>
+                                    <span class="suggestion-trades-chevron" x-text="setup.tradesRevealed ? '▲' : '▼'"></span>
+                                </button>
+                                <div class="suggestion-trades-list" x-show="setup.tradesRevealed" x-cloak>
+                                    <template x-for="(trade, tradeIndex) in setup.top_trades" :key="trade.ticker + '-' + trade.open_time_et + '-' + tradeIndex">
+                                        <div class="suggestion-trade">
+                                            <div class="suggestion-trade-main">
+                                                <span class="suggestion-trade-date mono" x-text="trade.open_time_et || 'Date unavailable'"></span>
+                                                <span class="suggestion-trade-ticker mono" x-text="trade.ticker"></span>
+                                                <span class="suggestion-trade-side" :class="trade.side === 'YES' ? 'side-yes' : 'side-no'" x-text="trade.side"></span>
+                                            </div>
+                                            <div class="suggestion-trade-stats">
+                                                <span>Entry <b class="mono" x-text="formatCurrency(trade.entry)"></b></span>
+                                                <span>Exit <b class="mono" x-text="formatCurrency(trade.exit)"></b></span>
+                                                <span>Net P&amp;L <b class="mono positive-text" x-text="formatPnl(trade.pnl)"></b></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <button class="suggestion-dismiss" @click="sp500SuggestionRevealed = false">Hide setups</button>
+            </div>
+        </section>
+
         <section class="panel positions-panel">
             <div class="section-heading positions-heading">
                 <div><p class="eyebrow">FULL ACCOUNT HISTORY</p><h2>Closed positions</h2></div>

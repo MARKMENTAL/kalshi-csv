@@ -77,6 +77,87 @@ def test_modern_dashboard_includes_all_trades_and_interactive_controls(sample_cs
     assert "alpine.min.js" in html_content
     assert "x-model=\"search\"" in html_content
     assert "S&amp;P 500 price tiers" in html_content
+    assert "S&amp;P 500 top hourly setups" in html_content
+    assert "CONTRACT TARGET HOUR" in html_content
+    assert "Show top 5 historical setups" in html_content
+    assert "No historical setup meets the minimum sample" in html_content
+    assert "This historical summary is not a forecast" in html_content
+    assert "AVG S&amp;P OPEN" in html_content
+    assert "AVG S&amp;P CLOSE" in html_content
+    assert "Show top winning trades" in html_content
+    assert "Hide top winning trades" in html_content
+    assert "sp500_hourly" in html_content
+
+
+def test_modern_dashboard_serializes_hourly_sp500_performance(sample_csv, monkeypatch):
+    from kalshi_csv import parser as parser_module
+
+    monkeypatch.setattr(
+        parser_module.KalshiCSV,
+        "_sp500_market_context",
+        lambda self, trades: None,
+    )
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    kalshi.trades[0]["market_category"] = "S&P 500 (INXU Intraday)"
+    kalshi.trades[0]["ticker"] = "KXINXU-26JUL07H1300-T7615"
+
+    html_content = render_modern_dashboard_html(kalshi, "test.csv")
+    data_block = html_content.split(
+        '<script id="dashboard-data" type="application/json">', 1
+    )[1].split("</script>", 1)[0]
+    payload = json.loads(data_block)
+
+    assert payload["sp500_hourly"] == [{
+        "price_tier": ">$0.40-$0.70 (At-the-Money / Coincident)",
+        "hour": 13,
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "net_pnl": 0.47,
+        "win_rate": 100.0,
+        "average_pnl": 0.47,
+        "target_hour": "13:00 ET",
+        "recommended": False,
+        "market_context": None,
+        "avg_sp500_open": None,
+        "avg_sp500_close": None,
+    }]
+
+
+def test_modern_dashboard_serializes_top_winning_suggestion_trades(sample_csv, monkeypatch):
+    from kalshi_csv import parser as parser_module
+
+    monkeypatch.setattr(
+        parser_module.KalshiCSV,
+        "_sp500_market_context",
+        lambda self, trades: None,
+    )
+    kalshi = KalshiCSV(sample_csv)
+    kalshi.parse()
+    base_trade = dict(kalshi.trades[0])
+    base_trade["market_category"] = "S&P 500 (INXU Intraday)"
+    base_trade["ticker"] = "KXINXU-26JUL07H1600-T7615"
+    base_trade["side"] = "YES"
+    base_trade["entry"] = 0.50
+    base_trade["exit"] = 1.0
+    kalshi.trades = [
+        dict(base_trade, pnl_with_fees=pnl)
+        for pnl in (0.2, 0.5, 0.3, 0.4, 0.1)
+    ]
+
+    html_content = render_modern_dashboard_html(kalshi, "test.csv")
+    data_block = html_content.split(
+        '<script id="dashboard-data" type="application/json">', 1
+    )[1].split("</script>", 1)[0]
+    payload = json.loads(data_block)
+    suggestion = next(item for item in payload["sp500_hourly"] if item["recommended"])
+
+    assert [trade["pnl"] for trade in suggestion["top_trades"]] == [0.5, 0.4, 0.3]
+    assert suggestion["top_trades"][0]["open_time_et"] == "Jul 07, 2026 09:48 AM ET"
+    assert all(trade["pnl"] > 0 for trade in suggestion["top_trades"])
+    assert "_trades" not in suggestion
 
 
 def test_modern_dashboard_escapes_csv_values_inside_json_data(sample_csv):

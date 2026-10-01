@@ -2,6 +2,13 @@
 
 Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries for event contract trading.
 
+## What's New in 0.3.1
+
+- **`--local` Flag**: Add `--local` to either `--legacy-web` or `--modern-web` to bind the server to `127.0.0.1` instead of all network interfaces.
+- **S&P 500 Hourly Setups**: The modern dashboard reveals up to five historically profitable setups, grouped by entry-price tier and the contract target hour encoded in the market ticker. Each setup shows its trade record, win rate, net P&L, average S&P 500 index prices at trade open and close, and an expandable list of its top winning trades.
+- **Yahoo Finance Integration**: S&P 500 index prices come from Yahoo Finance (`^GSPC`). Only ticker symbols and trade timestamps are requested; transaction CSV data is never sent to a third party, and unavailable market data is reported rather than guessed.
+- **Dashboard Data-Flow Documentation**: Developer notes now describe how parsed data is serialized into the HTML template and consumed by Alpine.js.
+
 ## What's New in 0.3.0
 
 - **S&P 500 Contract Performance by Price Tier**: The HTML view groups S&P 500 contracts by entry-price tier and reports trade count, win rate, and net P&L.
@@ -12,14 +19,6 @@ Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries for 
 ```bash
 pip install kalshi-csv
 ```
-
-## What's New in 0.2.0
-
-- **Summary Cards**: View key metrics at a glance - Net Realized P&L, Win/Loss Record, Total Volume, and Best/Worst Single Trade
-- **Market Breakdown**: See performance by market category with trade counts, win rates, and net P&L
-- **Legacy Web Mode**: Browse your portfolio in a retro HTML 4.01 web interface compatible with older browsers (Netscape Navigator, IE 4+)
-- **Market Categorization**: Automatic categorization of tickers into 7 market types (Global Soccer, MLB, NPB, NBA Summer League, WNBA, S&P 500, Multivariate Events, Other Markets)
-- **Handling of Sold + Acquired Dates**: Instead of handling the aggregated Kalshi trades through approximated dates, we use `VARIOUS` to signal to the IRS that every single underlying transaction in that row independently satisfies the short-term holding period rule (one year or less), even though they were purchased at different times.
 
 ## Getting Your Transactions CSV
 
@@ -87,10 +86,16 @@ Start the modern interactive dashboard:
 kalshi-csv Kalshi-Transactions-2026.csv --modern-web
 ```
 
-The modern dashboard is served at `http://127.0.0.1:8080/` by default. It binds to the local machine only because it includes your full trade history. Select a theme in the header; your selection is remembered in that browser. To choose another port:
+By default, the modern dashboard binds to `0.0.0.0:8080`, so it may be reachable from other devices on your network. Visit `http://127.0.0.1:8080/` on the same machine, or add `--local` to restrict access to that machine. Select a theme in the header; your selection is remembered in that browser. To choose another port:
 
 ```bash
 kalshi-csv Kalshi-Transactions-2026.csv --modern-web --modern-web-port 3000
+```
+
+To bind the modern dashboard to this machine only:
+
+```bash
+kalshi-csv Kalshi-Transactions-2026.csv --modern-web --local
 ```
 
 ### Sample Output
@@ -197,12 +202,18 @@ View your portfolio in a web browser with a retro HTML 4.01 interface compatible
 kalshi-csv Kalshi-Transactions-2026.csv --legacy-web
 ```
 
-This starts an HTTP server on `0.0.0.0:8080` by default. Access it from any machine on your network by navigating to `http://<your-ip>:8080`.
+This starts an HTTP server on `0.0.0.0:8080` by default, which may be reachable from other devices on your network. Access it locally at `http://127.0.0.1:8080`, or from another network device at `http://<your-ip>:8080`.
 
 To use a different port:
 
 ```bash
 kalshi-csv Kalshi-Transactions-2026.csv --legacy-web --legacy-web-port 3000
+```
+
+Use `--local` with either web mode to bind only to this machine (`127.0.0.1`):
+
+```bash
+kalshi-csv Kalshi-Transactions-2026.csv --legacy-web --local
 ```
 
 ### What's Displayed
@@ -224,11 +235,14 @@ For S&P 500 contracts, the HTML view groups trades into four entry-price tiers: 
 The modern dashboard is a separate HTML5 interface; `--legacy-web` continues to serve the original HTML 4.01 page. It includes:
 
 - Portfolio summary cards, an interactive market P&L chart, trade record distribution, and the S&P 500 entry-price analysis
+- An interactive S&P 500 hourly suggestion card, which reveals up to five historically profitable tier/hour setups
 - The full closed-trade history with ticker search, market and side filters, sortable columns, and pagination
 - An expandable IRS Form 8949 summary
 - All supplied color palettes, with the selected theme saved in the browser
 
-Alpine.js is bundled with the package and served locally; the dashboard does not load scripts, fonts, or transaction data from third-party services. 
+Alpine.js is bundled with the package and served locally; the dashboard does not load scripts, fonts, or transaction data from third-party services. The only external request is a read-only S&P 500 price lookup from Yahoo Finance, which sends ticker symbols and trade timestamps but never your transaction CSV. That lookup needs network access and may be unavailable for some dates, in which case the dashboard shows `N/A` instead of a value.
+
+The S&P 500 suggestion groups trades by entry-price tier and the contract target hour encoded by the ticker's `Hhhmm` field; each trade's actual open time is shown separately in its trade details. Suggested setups must have at least five trades and positive net P&L; candidates are ranked by win rate, then net P&L, and up to five are shown. Each setup shows the average S&P 500 index price (via Yahoo Finance `^GSPC` data) sampled near the trades' open and close timestamps, plus an expandable list of up to three winning trades ranked by net P&L. Win rates count positive-P&L trades over all trades, including pushes in the denominator, and net P&L includes fees. This is a summary of historical results, not a prediction or trading advice.
 
 ## Market Categorization
 
@@ -321,6 +335,17 @@ for trade in recent:
 ## Development & Testing
 
 For developers who want to contribute or run the test suite:
+
+### Modern Dashboard Data Flow
+
+The modern dashboard does not use a server-side templating engine. Its data moves through these steps:
+
+1. `KalshiCSV.parse()` populates the Python trade list and summary. In `src/kalshi_csv/web.py`, `render_modern_dashboard_html()` assembles these structures and the market, S&P 500, IRS, and theme data into the `dashboard_data` dictionary.
+2. The renderer serializes that dictionary with `json.dumps()` and escapes `&`, `<`, and `>` as Unicode escapes. This keeps CSV-controlled strings inside the JSON data block rather than allowing them to terminate the script element or become markup.
+3. The renderer reads `src/kalshi_csv/templates/modern.html` and uses plain string replacement to inject the serialized JSON into `{{DASHBOARD_DATA}}` and the package version into `{{APP_VERSION}}`. These are simple placeholders, not template-engine directives.
+4. The page stores the JSON in `<script id="dashboard-data" type="application/json">`. The locally bundled `dashboard.js` reads its `textContent`, parses it with `JSON.parse()`, and exposes the result as the Alpine.js component state. Alpine.js then drives the page’s `x-data`, `x-for`, and other interactive bindings.
+
+When changing this flow, preserve the JSON escaping and render CSV-controlled values as text (for example, with Alpine’s `x-text`), not executable HTML. Keep the version in `pyproject.toml` and `src/kalshi_csv/__init__.py` synchronized.
 
 ### Quick Start with Make
 
@@ -418,3 +443,4 @@ This project is hosted in two locations, GitHub and my home Forgejo server, cont
 ## License
 
 [MIT](LICENSE)
+

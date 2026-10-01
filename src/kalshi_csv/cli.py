@@ -67,8 +67,15 @@ def main():
         default=8080,
         help="Port for modern web dashboard (default: 8080)",
     )
+    parser.add_argument(
+        "--local",
+        action="store_true",
+        help="Bind the selected web server to 127.0.0.1 instead of all interfaces",
+    )
 
     args = parser.parse_args()
+    if args.local and not (args.legacy_web or args.modern_web):
+        parser.error("--local can only be used with --legacy-web or --modern-web")
     no_color = args.no_color
     ascii_mode = args.ascii
 
@@ -78,14 +85,16 @@ def main():
     if args.legacy_web:
         from .web import LegacyWebServer
         csv_filename = os.path.basename(args.csv_path)
-        server = LegacyWebServer(kalshi, csv_filename, port=args.legacy_web_port)
+        host = "127.0.0.1" if args.local else "0.0.0.0"
+        server = LegacyWebServer(kalshi, csv_filename, host=host, port=args.legacy_web_port)
         server.serve()
         return
 
     if args.modern_web:
         from .web import ModernWebServer
         csv_filename = os.path.basename(args.csv_path)
-        server = ModernWebServer(kalshi, csv_filename, port=args.modern_web_port)
+        host = "127.0.0.1" if args.local else "0.0.0.0"
+        server = ModernWebServer(kalshi, csv_filename, host=host, port=args.modern_web_port)
         server.serve()
         return
 

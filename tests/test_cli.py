@@ -2,6 +2,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def test_cli_runs_successfully(sample_csv):
     result = subprocess.run(
@@ -125,6 +127,47 @@ def test_cli_modern_web_flags_in_help():
     assert result.returncode == 0
     assert "--modern-web" in result.stdout
     assert "--modern-web-port" in result.stdout
+    assert "--local" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("web_flag", "server_attr"),
+    [("--legacy-web", "LegacyWebServer"), ("--modern-web", "ModernWebServer")],
+)
+@pytest.mark.parametrize(
+    ("local_args", "expected_host"),
+    [([], "0.0.0.0"), (["--local"], "127.0.0.1")],
+)
+def test_cli_selects_web_host(
+    sample_csv, monkeypatch, web_flag, server_attr, local_args, expected_host
+):
+    from kalshi_csv import cli, web
+
+    captured = {}
+
+    class StubServer:
+        def __init__(self, kalshi, csv_filename, host, port):
+            captured["host"] = host
+
+        def serve(self):
+            pass
+
+    monkeypatch.setattr(web, server_attr, StubServer)
+    monkeypatch.setattr(sys, "argv", ["kalshi-csv", sample_csv, web_flag] + local_args)
+
+    cli.main()
+
+    assert captured["host"] == expected_host
+
+
+def test_cli_local_requires_a_web_mode(sample_csv):
+    result = subprocess.run(
+        [sys.executable, "-m", "kalshi_csv.cli", sample_csv, "--local"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "--local can only be used" in result.stderr
 
 
 def test_cli_web_modes_are_mutually_exclusive(sample_csv):

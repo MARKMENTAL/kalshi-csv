@@ -10,6 +10,8 @@
             summary: payload.summary,
             markets: payload.markets,
             sp500Tiers: payload.sp500_tiers,
+            sp500Hourly: payload.sp500_hourly,
+            sp500SuggestionRevealed: false,
             trades: payload.trades,
             irs: payload.irs,
             themes: payload.themes,
@@ -53,6 +55,10 @@
 
             get categories() {
                 return [...new Set(this.trades.map((trade) => trade.market_category))].sort((a, b) => a.localeCompare(b));
+            },
+
+            get sp500Suggestions() {
+                return this.sp500Hourly.filter((item) => item.recommended);
             },
 
             get filteredTrades() {
@@ -123,6 +129,13 @@
 
             formatPercent(value) {
                 return `${Number(value || 0).toFixed(1)}%`;
+            },
+
+            formatSp500Price(value) {
+                return value == null ? "N/A" : Number(value).toLocaleString(undefined, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                });
             },
 
             pnlClass(value) {

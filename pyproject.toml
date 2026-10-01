@@ -4,11 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kalshi-csv"
-version = "0.3.0"
+version = "0.3.1"
 description = "Parse Kalshi transaction CSV files and generate IRS Form 8949 tax summaries"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"
+dependencies = [
+    "backports.zoneinfo; python_version < '3.9'",
+    "tzdata; python_version < '3.9'",
+    "yfinance>=0.2.51",
+]
 authors = [
     { name = "markmental", email = "marky611@gmail.com" }
 ]
